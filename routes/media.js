@@ -252,8 +252,15 @@ router.get('/series/nuevas', isAuth, async (req, res) => {
         .map(i => parseInt(i.ProviderIds.Tmdb))
     );
 
+    // Obtener IDs en watchlist del perfil
+    const { rows: enWatchlist } = await db.query(
+      "SELECT tmdb_id FROM watchlist WHERE perfil_id = $1",
+      [req.session.perfil.id]
+    );
+    const watchlistIds = new Set(enWatchlist.map(r => r.tmdb_id));
+
     const results = (tmdbData.results || []).filter(i =>
-      !ignorados.has(i.id) && !embyTmdbIds.has(i.id)
+      !ignorados.has(i.id) && !embyTmdbIds.has(i.id) && !watchlistIds.has(i.id)
     );
     res.json(results);
   } catch (e) {
