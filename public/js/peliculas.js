@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   cargarEstrenos();
   cargarWatchlist();
   cargarEmby();
+  fetch('/api/media/sync').catch(() => { });
+  fetch('/api/media/sync').catch(() => { });
 });
 
 // ─────────────────────────────────────────

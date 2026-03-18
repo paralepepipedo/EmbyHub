@@ -452,4 +452,84 @@ router.post('/ratings/manual', isAuth, async (req, res) => {
   }
 });
 
+// ── SYNC RÁPIDO — se llama al cargar peliculas.html ──────────
+router.get('/sync', isAuth, async (req, res) => {
+  try {
+    const { rows: pendientes } = await db.query(
+      "SELECT id, tmdb_id, tipo FROM watchlist WHERE perfil_id = $1 AND estado = 'pendiente'",
+      [req.session.perfil.id]
+    );
+    if (!pendientes.length) return res.json({ actualizados: 0 });
+
+    const [dataMovies, dataSeries] = await Promise.all([
+      emby.getItems({ tipo: 'movie', limit: 500 }),
+      emby.getItems({ tipo: 'tv', limit: 500 }),
+    ]);
+
+    const embyMap = new Map();
+    for (const item of (dataMovies.Items || [])) {
+      if (item.ProviderIds?.Tmdb) embyMap.set(`${item.ProviderIds.Tmdb}:movie`, item.Id);
+    }
+    for (const item of (dataSeries.Items || [])) {
+      if (item.ProviderIds?.Tmdb) embyMap.set(`${item.ProviderIds.Tmdb}:tv`, item.Id);
+    }
+
+    let actualizados = 0;
+    for (const item of pendientes) {
+      const embyId = embyMap.get(`${item.tmdb_id}:${item.tipo}`);
+      if (embyId) {
+        await db.query(
+          "UPDATE watchlist SET estado = 'en_emby', emby_item_id = $1, fecha_actualizado = now() WHERE id = $2",
+          [embyId, item.id]
+        );
+        actualizados++;
+      }
+    }
+
+    res.json({ actualizados });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── SYNC RÁPIDO ───────────────────────────────────────────────
+router.get('/sync', isAuth, async (req, res) => {
+  try {
+    const { rows: pendientes } = await db.query(
+      "SELECT id, tmdb_id, tipo FROM watchlist WHERE perfil_id = $1 AND estado = 'pendiente'",
+      [req.session.perfil.id]
+    );
+    if (!pendientes.length) return res.json({ actualizados: 0 });
+
+    const [dataMovies, dataSeries] = await Promise.all([
+      emby.getItems({ tipo: 'movie', limit: 500 }),
+      emby.getItems({ tipo: 'tv', limit: 500 }),
+    ]);
+
+    const embyMap = new Map();
+    for (const item of (dataMovies.Items || [])) {
+      if (item.ProviderIds?.Tmdb) embyMap.set(`${item.ProviderIds.Tmdb}:movie`, item.Id);
+    }
+    for (const item of (dataSeries.Items || [])) {
+      if (item.ProviderIds?.Tmdb) embyMap.set(`${item.ProviderIds.Tmdb}:tv`, item.Id);
+    }
+
+    let actualizados = 0;
+    for (const item of pendientes) {
+      const embyId = embyMap.get(`${item.tmdb_id}:${item.tipo}`);
+      if (embyId) {
+        await db.query(
+          "UPDATE watchlist SET estado = 'en_emby', emby_item_id = $1, fecha_actualizado = now() WHERE id = $2",
+          [embyId, item.id]
+        );
+        actualizados++;
+      }
+    }
+
+    res.json({ actualizados });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
