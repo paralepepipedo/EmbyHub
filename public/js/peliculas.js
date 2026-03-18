@@ -34,8 +34,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   cargarEstrenos();
   cargarWatchlist();
   cargarEmby();
-  fetch('/api/media/sync').catch(() => { });
-  fetch('/api/media/sync').catch(() => { });
+  fetch('/api/media/sync').then(r => r.json()).then(d => {
+    if (d.actualizados > 0) {
+      cargarWatchlist();
+      cargarEstrenos();
+    }
+  }).catch(() => { });
+
 });
 
 // ─────────────────────────────────────────
