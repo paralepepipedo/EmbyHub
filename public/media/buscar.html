@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscar - EmbyHub</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/mobile.css" media="(max-width: 768px)">
+  <style>
+    .topbar .nav-links a {
+      color: var(--text-muted);
+    }
+
+    .topbar .nav-links a.active {
+      color: white;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    /* Selector de fuente */
+    .source-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 1.5rem 0 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .source-tab {
+      padding: 0.45rem 1.1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 2px solid #333;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .source-tab:hover {
+      border-color: #555;
+      color: var(--text);
+    }
+
+    .source-tab.active-tmdb {
+      background: #01b4e4;
+      border-color: #01b4e4;
+      color: white;
+    }
+
+    .source-tab.active-neon {
+      background: #52B54B;
+      border-color: #52B54B;
+      color: white;
+    }
+
+    .source-tab.active-emby {
+      background: #52B54B;
+      border-color: #52B54B;
+      color: white;
+    }
+
+    .source-tab.active-igdb {
+      background: #9146ff;
+      border-color: #9146ff;
+      color: white;
+    }
+
+    .source-badge {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .badge-tmdb {
+      background: #01b4e4;
+      color: white;
+    }
+
+    .badge-neon {
+      background: #52B54B;
+      color: white;
+    }
+
+    .badge-emby {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .badge-igdb {
+      background: #9146ff;
+      color: white;
+    }
+  </style>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta name="theme-color" content="#52b54b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EmbyHub">
+</head>
+
+<body>
+
+  <div class="topbar">
+    <div class="nav-links">
+      <a href="/portal" style="font-size: 1.5rem; border: none; padding: 0;">⬅️</a>
+      <a href="/media/peliculas">🎬 Películas</a>
+      <a href="/media/series">📺 Series</a>
+      <a href="/media/buscar" class="active">🔍 Búsqueda</a>
+      <a href="/media/config">⚙️ Configuración</a>
+    </div>
+    <div class="user-info" onclick="logout()">
+      <span id="userName">Hola</span>
+      <div class="avatar" id="userAvatar">🎬</div>
+    </div>
+  </div>
+
+  <div class="page-content" style="max-width: 1200px; margin: 0 auto; text-align:center;">
+
+    <div class="search-container">
+      <input type="text" id="searchInput" class="search-input"
+        placeholder="Buscar películas, series, juegos, actores..." autocomplete="off">
+    </div>
+
+    <!-- Selector de fuente -->
+    <div class="source-tabs">
+      <button class="source-tab active-tmdb" id="src-tmdb" onclick="setFuente('tmdb')">🌐 TMDB</button>
+      <button class="source-tab" id="src-neon" onclick="setFuente('neon')">📋 Mi Biblioteca</button>
+      <button class="source-tab" id="src-emby" onclick="setFuente('emby')">🖥️ Emby</button>
+      <button class="source-tab" id="src-igdb" onclick="setFuente('igdb')">🎮 IGDB</button>
+    </div>
+
+    <!-- Tabs de tipo — cambian según la fuente -->
+    <div class="tabs" id="typeTabs">
+      <div class="tab active" onclick="setTab('multi')">Todo</div>
+      <div class="tab" onclick="setTab('movie')">Películas</div>
+      <div class="tab" onclick="setTab('tv')">Series</div>
+      <div class="tab" onclick="setTab('person')">Personas</div>
+    </div>
+
+    <div class="search-grid" id="searchGrid"></div>
+
+  </div>
+
+  <!-- Modal Detalle -->
+  <div class="detail-modal" id="modalDetalle">
+    <div class="detail-bg" id="md-bg"></div>
+    <div class="close-modal" onclick="closeModal()">×</div>
+    <div class="detail-content">
+      <img src="" id="md-poster" class="detail-poster">
+      <div class="detail-info">
+        <h2 class="detail-title" id="md-title">Título</h2>
+        <div class="detail-meta">
+          <span id="md-year"></span> •
+          <span id="md-type"></span>
+          <span id="md-status" style="margin-left:auto; font-weight:bold; color:var(--accent);"></span>
+        </div>
+        <div class="detail-genres" id="md-genres"></div>
+        <div class="detail-ratings" id="md-ratings"></div>
+        <div class="detail-desc" id="md-desc"></div>
+        <div class="action-buttons" id="md-actions"></div>
+        <div class="cast-list" id="md-cast"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/peliculas.js"></script>
+  <script src="/js/buscar.js"></script>
+
+  <nav class="mobile-nav">
+    <a href="/portal"><span class="nav-icon">🏠</span><span>Inicio</span></a>
+    <a href="/media/peliculas"><span class="nav-icon">🎬</span><span>Peliculas</span></a>
+    <a href="/media/series"><span class="nav-icon">📺</span><span>Series</span></a>
+    <a href="/media/buscar" class="active"><span class="nav-icon">🔍</span><span>Buscar</span></a>
+    <a href="/juegos"><span class="nav-icon">🎮</span><span>Juegos</span></a>
+  </nav>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+
+</html>

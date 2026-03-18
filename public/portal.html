@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal - EmbyHub</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/mobile.css" media="(max-width: 768px)">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta name="theme-color" content="#52b54b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EmbyHub">
+</head>
+<body>
+
+  <!-- Topbar simple solo con perfil -->
+  <div class="topbar" style="justify-content: flex-end;">
+    <div class="user-info" onclick="logout()">
+      <span id="userName">Hola</span>
+      <div class="avatar" id="userAvatar">🎬</div>
+    </div>
+  </div>
+
+  <div class="portal-container">
+    <a href="/juegos" class="portal-card portal-games">
+      <div class="portal-bg"></div>
+      <div class="portal-overlay"></div>
+      <h2>🕹️ JUEGOS</h2>
+    </a>
+    <a href="/media/peliculas" class="portal-card portal-media">
+      <div class="portal-bg"></div>
+      <div class="portal-overlay"></div>
+      <h2>🍿 PELÍCULAS Y SERIES</h2>
+    </a>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const me = await requireAuth(); // redirige al index si no hay sesion
+      if(me) {
+        document.getElementById('userName').innerText = me.nombre;
+        document.getElementById('userAvatar').innerText = me.avatar;
+      }
+    });
+  </script>
+
+  
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

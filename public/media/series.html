@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Series - EmbyHub</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/mobile.css" media="(max-width: 768px)">
+  <style>
+    .topbar .nav-links a { color: var(--text-muted); }
+    .topbar .nav-links a.active { color: white; border-bottom: 2px solid var(--accent); }
+  </style>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta name="theme-color" content="#52b54b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EmbyHub">
+</head>
+<body>
+
+  <!-- Topbar Media -->
+  <div class="topbar">
+    <div class="nav-links">
+      <a href="/portal" style="font-size: 1.5rem; border: none; padding: 0;">⬅️</a>
+      <a href="/media/peliculas">🎬 Películas</a>
+      <a href="/media/series" class="active">📺 Series</a>
+      <a href="/media/buscar">🔍 Búsqueda</a>
+      <a href="/media/config">⚙️ Configuración</a>
+    </div>
+    <div class="user-info" onclick="logout()">
+      <span id="userName">Hola</span>
+      <div class="avatar" id="userAvatar">🎬</div>
+    </div>
+  </div>
+
+  <div class="page-content">
+    
+    <div class="carousel-section">
+      <h3>🆕 Nuevas Temporadas / En emisión</h3>
+      <div class="carousel" id="car-nuevas"></div>
+    </div>
+
+    <div class="carousel-section">
+      <h3>🕒 Para ver luego</h3>
+      <div class="carousel" id="car-watchlist"></div>
+    </div>
+
+    <div class="carousel-section">
+      <h3>✅ Últimas en Servidor Emby</h3>
+      <div class="carousel" id="car-emby"></div>
+    </div>
+
+  </div>
+
+  <!-- Reutilizamos el mismo esquema de modal que en películas, pero 
+       en una app real sacaríamos esto a un componente web o import HTML. -->
+  <div class="detail-modal" id="modalDetalle">
+    <div class="detail-bg" id="md-bg"></div>
+    <div class="close-modal" onclick="closeModal()">×</div>
+    
+    <div class="detail-content">
+      <img src="" id="md-poster" class="detail-poster">
+      
+      <div class="detail-info">
+        <h2 class="detail-title" id="md-title">Título</h2>
+        <div class="detail-meta">
+          <span id="md-year"></span> • 
+          <span id="md-type">📺 Serie</span> <span id="md-status" style="margin-left:auto; font-weight:bold; color:var(--accent);"></span>
+        </div>
+        
+        <div class="detail-genres" id="md-genres"></div>
+        
+        <div class="detail-ratings" id="md-ratings"></div>
+
+        <div class="detail-desc" id="md-desc"></div>
+
+        <div class="action-buttons" id="md-actions"></div>
+
+        <div class="cast-list" id="md-cast"></div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <!-- Usamos la lógica base de peliculas.js para el modal, 
+       solo cambiamos de donde bajamos los carruseles -->
+  <script src="/js/peliculas.js"></script>
+  <script src="/js/buscar.js"></script>
+  <script src="/js/series.js"></script>
+
+  <nav class="mobile-nav">
+    <a href="/portal"><span class="nav-icon">🏠</span><span>Inicio</span></a>
+    <a href="/media/peliculas"><span class="nav-icon">🎬</span><span>Peliculas</span></a>
+    <a href="/media/series"><span class="nav-icon">📺</span><span>Series</span></a>
+    <a href="/media/buscar"><span class="nav-icon">🔍</span><span>Buscar</span></a>
+    <a href="/juegos"><span class="nav-icon">🎮</span><span>Juegos</span></a>
+  </nav>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

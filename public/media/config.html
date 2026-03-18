@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración - EmbyHub</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/mobile.css" media="(max-width: 768px)">
+  <style>
+    .topbar .nav-links a { color: var(--text-muted); }
+    .topbar .nav-links a.active { color: white; border-bottom: 2px solid var(--accent); }
+    .config-box { max-width: 800px; margin: 0 auto; background: var(--bg-card); padding: 2rem; border-radius: 12px; }
+    .genres-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .genre-item { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; }
+    .genre-item input { width: 20px; height: 20px; }
+  </style>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta name="theme-color" content="#52b54b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EmbyHub">
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="nav-links">
+      <a href="/portal" style="font-size: 1.5rem; border: none; padding: 0;">⬅️</a>
+      <a href="/media/peliculas">🎬 Películas</a>
+      <a href="/media/series">📺 Series</a>
+      <a href="/media/buscar">🔍 Búsqueda</a>
+      <a href="/media/config" class="active">⚙️ Configuración</a>
+    </div>
+    <div class="user-info" onclick="logout()">
+      <span id="userName">Hola</span>
+      <div class="avatar" id="userAvatar">🎬</div>
+    </div>
+  </div>
+
+  <div class="page-content">
+    
+    <div class="config-box">
+      <h2>Filtros del Perfil</h2>
+      <p style="color:var(--text-muted); margin-top:10px;">
+        Selecciona los géneros que deseas <b>OCULTAR</b> de las secciones de "Próximos Estrenos / Nuevas Series".
+      </p>
+
+      <h3 style="margin-top:2rem;">Películas</h3>
+      <div class="genres-grid" id="genresMovie">Cargando...</div>
+
+      <h3 style="margin-top:2rem;">Series</h3>
+      <div class="genres-grid" id="genresTv">Cargando...</div>
+
+      <div style="margin-top: 3rem; text-align: center;">
+        <button class="btn btn-emby" style="display:inline-block;" onclick="guardarConfig()">💾 Guardar Preferencias</button>
+        <span id="saveMsg" style="margin-left:15px; color:#52B54B;"></span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/config.js"></script>
+
+  <nav class="mobile-nav">
+    <a href="/portal"><span class="nav-icon">🏠</span><span>Inicio</span></a>
+    <a href="/media/peliculas"><span class="nav-icon">🎬</span><span>Peliculas</span></a>
+    <a href="/media/series"><span class="nav-icon">📺</span><span>Series</span></a>
+    <a href="/media/buscar"><span class="nav-icon">🔍</span><span>Buscar</span></a>
+    <a href="/juegos"><span class="nav-icon">🎮</span><span>Juegos</span></a>
+  </nav>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

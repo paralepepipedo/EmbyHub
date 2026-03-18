@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selección de Perfil - EmbyHub</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/mobile.css" media="(max-width: 768px)">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta name="theme-color" content="#52b54b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EmbyHub">
+</head>
+
+<body>
+
+  <div class="profile-selection">
+    <h1>¿Quién está viendo?</h1>
+    <div class="profiles-list" id="profilesList">
+      <!-- Cargar por JS -->
+    </div>
+  </div>
+
+  <!-- Modal PIN -->
+  <div class="pin-modal" id="pinModal">
+    <div class="pin-content">
+      <h3 id="pinTitle">Ingresa tu PIN</h3>
+      <input type="password" id="pinInput" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*"
+        autocomplete="one-time-code">
+      <br>
+      <button id="pinSubmit">Entrar</button>
+      <div id="pinError" style="color: var(--accent); margin-top: 10px;"></div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Redirigir si ya hay sesión
+      const me = await checkSession();
+      if (me) return window.location.href = '/portal';
+
+      // 2. Cargar perfiles
+      const res = await fetch('/api/perfiles');
+      const perfiles = await res.json();
+      const list = document.getElementById('profilesList');
+
+      perfiles.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'profile-card';
+        div.innerHTML = `
+          <div class="profile-avatar">${p.avatar}</div>
+          <div class="profile-name">${p.nombre}</div>
+        `;
+        div.onclick = () => showPinModal(p.id, p.nombre);
+        list.appendChild(div);
+      });
+    });
+
+    // Lógica PIN
+    let selectedId = null;
+    function showPinModal(id, nombre) {
+      selectedId = id;
+      document.getElementById('pinTitle').innerText = `Ingresa tu PIN, ${nombre}`;
+      document.getElementById('pinError').innerText = '';
+      document.getElementById('pinInput').value = '';
+      document.getElementById('pinModal').classList.add('active');
+      document.getElementById('pinInput').focus();
+    }
+
+    // click fuera = close modal
+    document.getElementById('pinModal').onclick = (e) => {
+      if (e.target === document.getElementById('pinModal')) {
+        document.getElementById('pinModal').classList.remove('active');
+      }
+    };
+
+    document.getElementById('pinSubmit').onclick = doLogin;
+    document.getElementById('pinInput').onkeyup = (e) => {
+      if (e.key === 'Enter') doLogin();
+    };
+
+    async function doLogin() {
+      const pin = document.getElementById('pinInput').value;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedId, pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = '/portal';
+      } else {
+        document.getElementById('pinError').innerText = data.error || 'Autenticación fallida';
+      }
+    }
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+
+</html>
