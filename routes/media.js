@@ -52,8 +52,15 @@ router.get('/peliculas/estrenos', isAuth, async (req, res) => {
         .map(i => parseInt(i.ProviderIds.Tmdb))
     );
 
+    // Obtener IDs en watchlist del perfil (cualquier estado)
+    const { rows: enWatchlist } = await db.query(
+      "SELECT tmdb_id FROM watchlist WHERE perfil_id = $1 AND tipo = 'movie'",
+      [req.session.perfil.id]
+    );
+    const watchlistIds = new Set(enWatchlist.map(r => r.tmdb_id));
+
     const filtrados = (tmdbData.results || []).filter(i =>
-      !ignorados.has(i.id) && !embyTmdbIds.has(i.id)
+      !ignorados.has(i.id) && !embyTmdbIds.has(i.id) && !watchlistIds.has(i.id)
     );
 
     // Top 10 por popularidad, resto por fecha ascendente
@@ -90,23 +97,50 @@ router.get('/emby/:tipo', isAuth, async (req, res) => {
     const data = await emby.getItems({ tipo: embyType, limit: 30 });
     const items = data.Items || [];
 
-    // Cruzar con TMDB para obtener poster_path
-    const enriquecidos = await Promise.all(items.map(async (i) => {
-      const tmdbId = i.ProviderIds?.Tmdb ? parseInt(i.ProviderIds.Tmdb) : null;
-      let poster_path = null;
+    // Obtener tmdbIds de los items
+    const tmdbIds = items
+      .filter(i => i.ProviderIds?.Tmdb)
+      .map(i => parseInt(i.ProviderIds.Tmdb));
 
-      if (tmdbId) {
+    // Buscar posters en caché Neon
+    const { rows: cached } = tmdbIds.length
+      ? await db.query(
+        'SELECT tmdb_id, poster_path FROM cache_emby_posters WHERE tmdb_id = ANY($1) AND tipo = $2',
+        [tmdbIds, embyType]
+      )
+      : { rows: [] };
+
+    const posterCache = new Map(cached.map(r => [r.tmdb_id, r.poster_path]));
+
+    // Para los que no están en caché, consultar TMDB y guardar
+    const sinCache = tmdbIds.filter(id => !posterCache.has(id));
+
+    if (sinCache.length) {
+      await Promise.all(sinCache.map(async (tmdbId) => {
         try {
           const detalle = embyType === 'movie'
             ? await tmdb.peliculaDetalle(tmdbId)
             : await tmdb.serieDetalle(tmdbId);
-          poster_path = detalle?.poster_path || null;
+          const poster = detalle?.poster_path || null;
+          posterCache.set(tmdbId, poster);
+          await db.query(`
+            INSERT INTO cache_emby_posters (tmdb_id, tipo, poster_path, ultima_actualizacion)
+            VALUES ($1, $2, $3, now())
+            ON CONFLICT (tmdb_id) DO UPDATE SET
+              poster_path          = EXCLUDED.poster_path,
+              ultima_actualizacion = now()
+          `, [tmdbId, embyType, poster]);
         } catch (e) {
-          // Si falla TMDB, continuar sin poster
+          // Si falla TMDB continuar sin poster
         }
-      }
+      }));
+    }
 
-      return { ...i, tmdb_poster_path: poster_path };
+    const enriquecidos = items.map(i => ({
+      ...i,
+      tmdb_poster_path: i.ProviderIds?.Tmdb
+        ? posterCache.get(parseInt(i.ProviderIds.Tmdb)) || null
+        : null,
     }));
 
     res.json(enriquecidos);
@@ -252,15 +286,15 @@ router.get('/series/nuevas', isAuth, async (req, res) => {
         .map(i => parseInt(i.ProviderIds.Tmdb))
     );
 
-    // Obtener IDs en watchlist del perfil
-    const { rows: enWatchlist } = await db.query(
-      "SELECT tmdb_id FROM watchlist WHERE perfil_id = $1",
+    // Obtener IDs en watchlist de series del perfil
+    const { rows: enWatchlistTv } = await db.query(
+      "SELECT tmdb_id FROM watchlist WHERE perfil_id = $1 AND tipo = 'tv'",
       [req.session.perfil.id]
     );
-    const watchlistIds = new Set(enWatchlist.map(r => r.tmdb_id));
+    const watchlistTvIds = new Set(enWatchlistTv.map(r => r.tmdb_id));
 
     const results = (tmdbData.results || []).filter(i =>
-      !ignorados.has(i.id) && !embyTmdbIds.has(i.id) && !watchlistIds.has(i.id)
+      !ignorados.has(i.id) && !embyTmdbIds.has(i.id) && !watchlistTvIds.has(i.id)
     );
     res.json(results);
   } catch (e) {
@@ -460,46 +494,6 @@ router.post('/ratings/manual', isAuth, async (req, res) => {
 });
 
 // ── SYNC RÁPIDO — se llama al cargar peliculas.html ──────────
-router.get('/sync', isAuth, async (req, res) => {
-  try {
-    const { rows: pendientes } = await db.query(
-      "SELECT id, tmdb_id, tipo FROM watchlist WHERE perfil_id = $1 AND estado = 'pendiente'",
-      [req.session.perfil.id]
-    );
-    if (!pendientes.length) return res.json({ actualizados: 0 });
-
-    const [dataMovies, dataSeries] = await Promise.all([
-      emby.getItems({ tipo: 'movie', limit: 500 }),
-      emby.getItems({ tipo: 'tv', limit: 500 }),
-    ]);
-
-    const embyMap = new Map();
-    for (const item of (dataMovies.Items || [])) {
-      if (item.ProviderIds?.Tmdb) embyMap.set(`${item.ProviderIds.Tmdb}:movie`, item.Id);
-    }
-    for (const item of (dataSeries.Items || [])) {
-      if (item.ProviderIds?.Tmdb) embyMap.set(`${item.ProviderIds.Tmdb}:tv`, item.Id);
-    }
-
-    let actualizados = 0;
-    for (const item of pendientes) {
-      const embyId = embyMap.get(`${item.tmdb_id}:${item.tipo}`);
-      if (embyId) {
-        await db.query(
-          "UPDATE watchlist SET estado = 'en_emby', emby_item_id = $1, fecha_actualizado = now() WHERE id = $2",
-          [embyId, item.id]
-        );
-        actualizados++;
-      }
-    }
-
-    res.json({ actualizados });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ── SYNC RÁPIDO ───────────────────────────────────────────────
 router.get('/sync', isAuth, async (req, res) => {
   try {
     const { rows: pendientes } = await db.query(
