@@ -14,6 +14,7 @@ const configRoutes = require('./routes/config');
 const buscarRoutes = require('./routes/buscar');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
