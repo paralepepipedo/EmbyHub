@@ -88,28 +88,7 @@ router.get('/emby/:tipo', isAuth, async (req, res) => {
   try {
     const embyType = req.params.tipo === 'movie' ? 'movie' : 'tv';
     const data = await emby.getItems({ tipo: embyType, limit: 30 });
-    const items = data.Items || [];
-
-    // Cruzar con TMDB para obtener poster_path
-    const enriquecidos = await Promise.all(items.map(async (i) => {
-      const tmdbId = i.ProviderIds?.Tmdb ? parseInt(i.ProviderIds.Tmdb) : null;
-      let poster_path = null;
-
-      if (tmdbId) {
-        try {
-          const detalle = embyType === 'movie'
-            ? await tmdb.peliculaDetalle(tmdbId)
-            : await tmdb.serieDetalle(tmdbId);
-          poster_path = detalle?.poster_path || null;
-        } catch (e) {
-          // Si falla TMDB, continuar sin poster
-        }
-      }
-
-      return { ...i, tmdb_poster_path: poster_path };
-    }));
-
-    res.json(enriquecidos);
+    res.json(data.Items || []);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

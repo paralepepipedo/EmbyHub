@@ -1,14 +1,16 @@
 // ============================================================
 // RUTA: public/js/peliculas.js
-// VERSIÓN: v1.7
+// VERSIÓN: v1.8
 // CAMBIOS:
-//   - Botón "🚫 Ignorar" en modal de detalle para estrenos
-//   - Si ya está ignorado muestra "↩ Dejar de ignorar"
-//   - Al ignorar se recarga el carrusel de estrenos
-//   - ignorarItem() y dejarDeIgnorar() como funciones globales
+//   - Rating IMDb en tarjetas de estrenos (en segundo plano)
+//   - Rating IMDb en tarjetas de watchlist (en segundo plano)
+//   - Se muestra ⭐ X.X a la derecha del año en .year
 // ============================================================
 
 const embyBaseUrl = window.EMBY_BASE_URL || 'http://emby4.ddns.net:8096';
+let estrenosPagina = 1;
+let estrenosCargando = false;
+let estrenosVistos = new Set();
 
 function formatearFecha(fechaStr) {
   if (!fechaStr) return '';
@@ -37,20 +39,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ─────────────────────────────────────────
 // 1. Próximos estrenos
 // ─────────────────────────────────────────
-async function cargarEstrenos() {
-  setCargando('car-estrenos');
+async function cargarEstrenos(pagina = 1) {
+  if (estrenosCargando) return;
+  estrenosCargando = true;
+
+  if (pagina === 1) setCargando('car-estrenos');
+
   try {
-    const res = await fetch('/api/media/peliculas/estrenos');
+    const res = await fetch(`/api/media/peliculas/estrenos?page=${pagina}`);
     const items = await res.json();
+
     if (!Array.isArray(items) || items.length === 0) {
-      setVacio('car-estrenos', 'No hay estrenos próximos.');
+      if (pagina === 1) setVacio('car-estrenos', 'No hay estrenos próximos.');
+      estrenosCargando = false;
       return;
     }
-    renderCarruselEstrenos('car-estrenos', items);
+
+    if (pagina === 1) {
+      document.getElementById('car-estrenos').innerHTML = '';
+      estrenosVistos = new Set();
+    }
+
+    const itemsNuevos = items.filter(i => !estrenosVistos.has(i.id));
+    itemsNuevos.forEach(i => estrenosVistos.add(i.id));
+
+    renderCarruselEstrenos('car-estrenos', itemsNuevos, pagina === 1);
+    estrenosPagina = pagina;
+
+    const ids = items.filter(i => i.id).map(i => i.id);
+    if (ids.length) cargarRatingsCarrusel('car-estrenos', ids);
+
   } catch (e) {
     console.error('[Estrenos]', e);
-    setVacio('car-estrenos', 'Error al cargar estrenos.');
+    if (pagina === 1) setVacio('car-estrenos', 'Error al cargar estrenos.');
   }
+
+  estrenosCargando = false;
 }
 
 // ─────────────────────────────────────────
@@ -62,6 +86,9 @@ async function cargarWatchlist() {
     const res = await fetch('/api/media/watchlist/movie');
     const items = await res.json();
     renderCarruselDb('car-watchlist', items);
+    // Cargar ratings IMDb en segundo plano
+    const ids = items.filter(i => i.tmdb_id).map(i => i.tmdb_id);
+    if (ids.length) cargarRatingsCarrusel('car-watchlist', ids);
   } catch (e) {
     console.error('[Watchlist]', e);
     setVacio('car-watchlist', 'Error al cargar tu lista.');
@@ -123,13 +150,36 @@ async function cargarRatingsEmby(tmdbIds) {
   }
 }
 
-// ─────────────────────────────────────────
-// RENDERS
-// ─────────────────────────────────────────
+// Carga ratings IMDb para cualquier carrusel por contenedor ID
+async function cargarRatingsCarrusel(idContenedor, tmdbIds) {
+  try {
+    const res = await fetch(`/api/media/ratings-lote?ids=${tmdbIds.join(',')}&tipo=movie`);
+    const ratings = await res.json();
 
-function renderCarruselEstrenos(idContenedor, items) {
+    document.querySelectorAll(`#${idContenedor} .card[data-tmdb-id]`).forEach(card => {
+      const tmdbId = parseInt(card.dataset.tmdbId);
+      const r = ratings[tmdbId];
+      if (r?.imdb_rating) {
+        const yearEl = card.querySelector('.year');
+        if (yearEl && !yearEl.querySelector('.imdb-inline')) {
+          const span = document.createElement('span');
+          span.className = 'imdb-inline';
+          span.style.cssText = 'color:#f5c518; font-weight:700; margin-left:6px; font-size:0.72em; white-space:nowrap;';
+          span.innerText = `⭐ ${r.imdb_rating}`;
+          yearEl.appendChild(span);
+        }
+      }
+    });
+  } catch (e) {
+    console.error(`[cargarRatingsCarrusel:${idContenedor}]`, e);
+  }
+}
+
+
+
+function renderCarruselEstrenos(idContenedor, items, reset = false) {
   const cont = document.getElementById(idContenedor);
-  cont.innerHTML = '';
+  if (reset) cont.innerHTML = '';
 
   items.forEach(i => {
     const img = i.poster_path
@@ -141,6 +191,7 @@ function renderCarruselEstrenos(idContenedor, items) {
 
     const div = document.createElement('div');
     div.className = 'card card-estreno';
+    div.dataset.tmdbId = i.id;
     div.innerHTML = `
       <img src="${img}" loading="lazy" onerror="this.src='https://placehold.co/500x750/1a1a1a/666?text=Sin+Imagen'">
       <div class="badge estreno">🆕 ESTRENO</div>
@@ -179,6 +230,16 @@ function renderCarruselEstrenos(idContenedor, items) {
 
     cont.appendChild(div);
   });
+
+  // Detector de scroll infinito — solo registrar una vez
+  if (reset) {
+    cont.onscroll = () => {
+      const distanciaAlFinal = cont.scrollWidth - cont.clientWidth - cont.scrollLeft;
+      if (distanciaAlFinal <= 300 && !estrenosCargando) {
+        cargarEstrenos(estrenosPagina + 1);
+      }
+    };
+  }
 }
 
 function renderCarruselEmby(idContenedor, items) {
@@ -229,6 +290,7 @@ function renderCarruselDb(idContenedor, items) {
 
     const div = document.createElement('div');
     div.className = 'card';
+    div.dataset.tmdbId = i.tmdb_id;
     div.innerHTML = `
       <img src="${img}" loading="lazy">
       <div class="badge espera">🕒 ESPERA</div>
@@ -365,14 +427,23 @@ async function abrirModal(tipo, tmdbId, embyId, localCover) {
     });
 
     const ratDiv = document.getElementById('md-ratings');
-    if (data.ratings) {
-      if (data.ratings.imdb_rating)
-        ratDiv.innerHTML += `<div class="rating-item"><img src="https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg" alt="IMDb"> ${data.ratings.imdb_rating}/10</div>`;
-      if (data.ratings.rt_score)
-        ratDiv.innerHTML += `<div class="rating-item"><img src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Rotten_Tomatoes.svg" alt="RT"> ${data.ratings.rt_score}%</div>`;
-      if (data.ratings.metacritic_score)
-        ratDiv.innerHTML += `<div class="rating-item"><span style="background:#66CC33;color:white;padding:2px 6px;border-radius:4px;font-weight:bold;">M</span> ${data.ratings.metacritic_score}</div>`;
+    const imdbId = data.external_ids?.imdb_id;
+    if (data.ratings?.imdb_rating) {
+      ratDiv.innerHTML += `<div class="rating-item"><img src="https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg" alt="IMDb"> ${data.ratings.imdb_rating}/10</div>`;
+    } else {
+      // Sin rating IMDb — mostrar logo con link + botón manual
+      ratDiv.innerHTML += `
+        <div class="rating-item" style="gap:6px;">
+          <a href="https://www.imdb.com/title/${imdbId || ''}/" target="_blank" title="Ver en IMDb">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg" alt="IMDb" style="height:20px;">
+          </a>
+          <button onclick="abrirModalRatingManual()" style="background:#f5c518;color:#000;border:none;border-radius:4px;padding:2px 8px;font-weight:700;cursor:pointer;font-size:0.9rem;" title="Ingresar rating manualmente">?</button>
+        </div>`;
     }
+    if (data.ratings?.rt_score)
+      ratDiv.innerHTML += `<div class="rating-item"><img src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Rotten_Tomatoes.svg" alt="RT"> ${data.ratings.rt_score}%</div>`;
+    if (data.ratings?.metacritic_score)
+      ratDiv.innerHTML += `<div class="rating-item"><span style="background:#66CC33;color:white;padding:2px 6px;border-radius:4px;font-weight:bold;">M</span> ${data.ratings.metacritic_score}</div>`;
 
     const castDiv = document.getElementById('md-cast');
     (data.credits?.cast || []).slice(0, 10).forEach(c => {
@@ -474,4 +545,45 @@ function setCargando(id) {
 function setVacio(id, mensaje) {
   const cont = document.getElementById(id);
   if (cont) cont.innerHTML = `<span class="vacio">${mensaje}</span>`;
+}
+// ─────────────────────────────────────────
+// RATING MANUAL
+// ─────────────────────────────────────────
+function abrirModalRatingManual() {
+  const modal = document.getElementById('modalRatingManual');
+  if (modal) {
+    document.getElementById('inputRatingManual').value = '';
+    modal.classList.add('active');
+  }
+}
+
+function cerrarModalRatingManual() {
+  document.getElementById('modalRatingManual').classList.remove('active');
+}
+
+async function guardarRatingManual() {
+  const valor = document.getElementById('inputRatingManual').value.trim().replace(',', '.');
+  const rating = parseFloat(valor);
+
+  if (isNaN(rating) || rating < 0 || rating > 10) {
+    document.getElementById('errorRatingManual').innerText = 'Ingresa un número entre 0 y 10 (ej: 7.6)';
+    return;
+  }
+
+  const { id, tipo } = currentModalItem;
+  const imdbId = currentModalItem.external_ids?.imdb_id;
+
+  const res = await fetch('/api/media/ratings/manual', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tmdb_id: id, tipo, imdb_id: imdbId, imdb_rating: rating }),
+  });
+
+  if (res.ok) {
+    cerrarModalRatingManual();
+    // Recargar el modal para mostrar el nuevo rating
+    abrirModal(tipo, id, currentModalItem.emby_id, null);
+  } else {
+    document.getElementById('errorRatingManual').innerText = 'Error al guardar.';
+  }
 }

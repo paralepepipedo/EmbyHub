@@ -114,8 +114,8 @@ async function cargarEmby() {
       id: i.ProviderIds?.Tmdb ? parseInt(i.ProviderIds.Tmdb) : null,
       title: i.Name,
       release_date: i.ProductionYear ? String(i.ProductionYear) : '',
-      embyImage: i.ImageTags?.Primary
-        ? `${embyBaseUrl}/Items/${i.Id}/Images/Primary?maxHeight=750&quality=90`
+      embyImage: i.tmdb_poster_path
+        ? `/api/media/img${i.tmdb_poster_path}?size=w500`
         : null,
     }));
 

@@ -1,8 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 const path = require('path');
 const cron = require('node-cron');
+const db = require('./lib/db');
 
 const authRoutes = require('./routes/auth');
 const perfilesRoutes = require('./routes/perfiles');
@@ -20,12 +22,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
+  store: new pgSession({
+    pool: db.pool,
+    tableName: 'session',
+    createTableIfMissing: false,
+  }),
   secret: process.env.SESSION_SECRET || 'embyhub-secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
-    httpOnly: true
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   }
 }));
 
