@@ -43,7 +43,7 @@ router.get('/peliculas/estrenos', isAuth, async (req, res) => {
 
     const [tmdbData, embyData] = await Promise.all([
       tmdb.proximosEstrenosPeliculas(excl, parseInt(req.query.page) || 1),
-      emby.getItems({ tipo: 'movie', limit: 500 }),
+      emby.getItems({ tipo: 'movie', limit: 500 }).catch(() => ({ Items: [] })),
     ]);
 
     const embyTmdbIds = new Set(
@@ -277,7 +277,7 @@ router.get('/series/nuevas', isAuth, async (req, res) => {
 
     const [tmdbData, embyData] = await Promise.all([
       tmdb.seriesAlAire(excl),
-      emby.getItems({ tipo: 'tv', limit: 500 }),
+      emby.getItems({ tipo: 'tv', limit: 500 }).catch(() => ({ Items: [] })),
     ]);
 
     const embyTmdbIds = new Set(
@@ -503,8 +503,8 @@ router.get('/sync', isAuth, async (req, res) => {
     if (!pendientes.length) return res.json({ actualizados: 0 });
 
     const [dataMovies, dataSeries] = await Promise.all([
-      emby.getItems({ tipo: 'movie', limit: 500 }),
-      emby.getItems({ tipo: 'tv', limit: 500 }),
+      emby.getItems({ tipo: 'movie', limit: 500 }).catch(() => ({ Items: [] })),
+      emby.getItems({ tipo: 'tv', limit: 500 }).catch(() => ({ Items: [] })),
     ]);
 
     const embyMap = new Map();
