@@ -38,7 +38,8 @@ async function getIgnoradosIds(perfilId, tipo) {
 
 router.get('/peliculas/estrenos', isAuth, async (req, res) => {
   try {
-    const excl = await getExcluidos(req.session.perfil.id);
+    const exclBase = await getExcluidos(req.session.perfil.id);
+    const excl = exclBase ? `${exclBase},27` : '27';
     const ignorados = await getIgnoradosIds(req.session.perfil.id, 'movie');
 
     const [tmdbData, embyData] = await Promise.all([
