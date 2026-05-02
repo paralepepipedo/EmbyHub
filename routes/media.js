@@ -273,7 +273,8 @@ router.get('/ratings-lote', isAuth, async (req, res) => {
 
 router.get('/series/nuevas', isAuth, async (req, res) => {
   try {
-    const excl = await getExcluidos(req.session.perfil.id);
+    const exclBase = await getExcluidos(req.session.perfil.id);
+    const excl = exclBase ? `${exclBase},27` : '27';
     const ignorados = await getIgnoradosIds(req.session.perfil.id, 'tv');
 
     const [tmdbData, embyData] = await Promise.all([
@@ -294,10 +295,17 @@ router.get('/series/nuevas', isAuth, async (req, res) => {
     );
     const watchlistTvIds = new Set(enWatchlistTv.map(r => r.tmdb_id));
 
-    const results = (tmdbData.results || []).filter(i =>
+    const filtrados = (tmdbData.results || []).filter(i =>
       !ignorados.has(i.id) && !embyTmdbIds.has(i.id) && !watchlistTvIds.has(i.id)
     );
-    res.json(results);
+
+    const top10 = [...filtrados].sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 10);
+    const top10Ids = new Set(top10.map(i => i.id));
+    const resto = filtrados
+      .filter(i => !top10Ids.has(i.id))
+      .sort((a, b) => new Date(a.first_air_date) - new Date(b.first_air_date));
+
+    res.json([...top10, ...resto]);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
