@@ -15,6 +15,36 @@ const { isAuth } = require('./auth');
 
 const ESTADOS = ['wishlist', 'pending', 'downloaded', 'playing', 'completed'];
 
+// Specs de "Mi PC" del perfil — alimentan el prompt de análisis y las tarjetas de compatibilidad
+router.get('/pc', isAuth, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT pc_cpu, pc_gpu, pc_ram, pc_storage, pc_os, pc_resolucion FROM perfiles WHERE id = $1`,
+      [req.session.perfil.id]
+    );
+    const p = rows[0] || {};
+    res.json({
+      cpu: p.pc_cpu || '', gpu: p.pc_gpu || '', ram: p.pc_ram || '',
+      storage: p.pc_storage || '', os: p.pc_os || '', resolucion: p.pc_resolucion || '',
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+router.put('/pc', isAuth, async (req, res) => {
+  const { cpu, gpu, ram, storage, os, resolucion } = req.body || {};
+  try {
+    await db.query(
+      `UPDATE perfiles SET pc_cpu=$1, pc_gpu=$2, pc_ram=$3, pc_storage=$4, pc_os=$5, pc_resolucion=$6, actualizado_en=now() WHERE id=$7`,
+      [cpu || '', gpu || '', ram || '', storage || '', os || '', resolucion || '', req.session.perfil.id]
+    );
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
 function toRow(g) {
   return {
     id: g.id,
