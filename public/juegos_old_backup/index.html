@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     RUTA: public/juegos/index.html
+     VERSIÓN: v2.0
+     Rediseño completo del módulo de juegos
+============================================================ -->
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juegos - EmbyHub</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/mobile.css" media="(max-width: 768px)">
+  <style>
+    /* ── Variables locales ── */
+    :root {
+      --border-color: #2a2a2a;
+      --bg-modal: #141414;
+      --bg-input: #1e1e1e;
+    }
+
+    /* ── Topbar nav juegos ── */
+    .topbar .nav-links a {
+      color: var(--text-muted);
+    }
+
+    .topbar .nav-links a.active {
+      color: white;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    /* ── Secciones ── */
+    .juegos-seccion {
+      margin-bottom: 3rem;
+    }
+
+    .juegos-seccion h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .juegos-seccion h3 .count {
+      font-size: 0.8rem;
+      background: var(--border-color);
+      color: var(--text-muted);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-weight: 400;
+    }
+
+    /* ── Cards de juegos ── */
+    .juegos-carrusel {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+      scrollbar-width: thin;
+      scrollbar-color: #333 transparent;
+    }
+
+    .juegos-carrusel::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .juegos-carrusel::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+
+    .juego-card {
+      flex: 0 0 150px;
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      background: var(--bg-card);
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+
+    .juego-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+      z-index: 10;
+    }
+
+    .juego-card img {
+      width: 150px;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .juego-card .info {
+      padding: 0.5rem 0.6rem 0.6rem;
+      background: linear-gradient(transparent, var(--bg-card));
+    }
+
+    .juego-card .info .title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .juego-card .info .year {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Badges de estado para juegos */
+    .juego-badge {
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+    }
+
+    .juego-badge.instalado {
+      background: rgba(82, 181, 75, 0.9);
+      color: #fff;
+    }
+
+    .juego-badge.en_biblioteca {
+      background: rgba(33, 150, 243, 0.9);
+      color: #fff;
+    }
+
+    .juego-badge.descargado {
+      background: rgba(255, 152, 0, 0.9);
+      color: #fff;
+    }
+
+    .juego-badge.por_descargar {
+      background: rgba(156, 39, 176, 0.9);
+      color: #fff;
+    }
+
+    .juego-badge.falta_recursos {
+      background: rgba(120, 120, 120, 0.9);
+      color: #fff;
+    }
+
+    .juego-badge.deseado {
+      background: rgba(229, 9, 20, 0.9);
+      color: #fff;
+    }
+
+    .juego-badge.proximo {
+      background: rgba(0, 188, 212, 0.9);
+      color: #fff;
+    }
+
+    .juego-badge.terminado {
+      background: rgba(255, 215, 0, 0.9);
+      color: #000;
+    }
+
+    /* ── Modal detalle juego ── */
+    .juego-modal-content {
+      position: relative;
+      z-index: 910;
+      display: flex;
+      flex-direction: row;
+      gap: 2.5rem;
+      width: 100%;
+      max-width: 860px;
+      margin: 80px auto 60px;
+      padding: 0 1.5rem;
+      align-items: flex-start;
+      box-sizing: border-box;
+    }
+
+    .juego-modal-poster {
+      flex: 0 0 200px;
+      width: 200px;
+      border-radius: 10px;
+      object-fit: cover;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    .juego-modal-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .juego-modal-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .juego-modal-meta {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .juego-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .juego-tag {
+      background: var(--border-color);
+      border: 1px solid #333;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .juego-tag.plat {
+      background: #1565C0;
+      color: white;
+      border-color: #1565C0;
+    }
+
+    .juego-modal-desc {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #ccc;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    .juego-modal-divider {
+      border: none;
+      border-top: 1px solid var(--border-color);
+      margin: 0.5rem 0;
+    }
+
+    .juego-modal-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .juego-modal-select {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: var(--bg-input);
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .juego-modal-select:focus {
+      border-color: var(--accent);
+    }
+
+    .juego-modal-textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: var(--bg-input);
+      color: var(--text);
+      outline: none;
+      resize: vertical;
+      min-height: 60px;
+      font-family: inherit;
+    }
+
+    .juego-modal-textarea:focus {
+      border-color: var(--accent);
+    }
+
+    /* ── Modal IGDB buscador ── */
+    .igdb-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 950;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-y: auto;
+      padding: 5vh 1rem;
+    }
+
+    .igdb-overlay.active {
+      display: flex;
+    }
+
+    .igdb-box {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 600px;
+      position: relative;
+    }
+
+    .igdb-box h2 {
+      margin-bottom: 0.4rem;
+    }
+
+    .igdb-box p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-bottom: 1rem;
+    }
+
+    .igdb-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: var(--bg-input);
+      color: var(--text);
+      outline: none;
+      margin-bottom: 1rem;
+    }
+
+    .igdb-input:focus {
+      border-color: var(--accent);
+    }
+
+    /* Selector de sección al agregar */
+    .igdb-estado-select {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: var(--bg-input);
+      color: var(--text);
+      outline: none;
+      margin-bottom: 1rem;
+      cursor: pointer;
+    }
+
+    .igdb-estado-select:focus {
+      border-color: var(--accent);
+    }
+
+    .igdb-results {
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .igdb-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      align-items: center;
+      transition: background 0.2s;
+    }
+
+    .igdb-item:hover {
+      background: #222;
+    }
+
+    .igdb-item img {
+      width: 48px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .igdb-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .igdb-item-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .igdb-item-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .igdb-close {
+      position: absolute;
+      top: 0.8rem;
+      right: 1rem;
+      font-size: 2rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      line-height: 1;
+    }
+
+    .igdb-close:hover {
+      color: var(--text);
+    }
+
+    .igdb-loading {
+      text-align: center;
+      padding: 1rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ── Próximos estrenos IGDB ── */
+    .proximos-seccion {
+      margin-bottom: 3rem;
+    }
+
+    /* ── Vacío / cargando ── */
+    .juegos-vacio {
+      color: var(--text-dim);
+      padding: 0.5rem 0;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .juego-modal-content {
+        flex-direction: column;
+        align-items: center;
+        margin-top: 60px;
+        padding: 0 1rem;
+      }
+
+      .juego-modal-poster {
+        width: 140px;
+        flex: none;
+      }
+
+      .juego-modal-title {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta name="theme-color" content="#52b54b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EmbyHub">
+</head>
+
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="nav-links">
+      <a href="/portal" style="font-size: 1.5rem; border: none; padding: 0;">⬅️</a>
+      <a href="/juegos" class="active">🎮 Juegos</a>
+    </div>
+    <button class="btn btn-add" onclick="abrirBuscadorIGDB()">+ Agregar Juego</button>
+    <div class="user-info" onclick="logout()">
+      <span id="userName">Hola</span>
+      <div class="avatar" id="userAvatar">🎮</div>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Próximos estrenos -->
+    <div class="juegos-seccion" id="sec-proximos">
+      <h3>🔜 Próximos Estrenos <span class="count" id="cnt-proximos">0</span></h3>
+      <div class="juegos-carrusel" id="car-proximos">
+        <span class="juegos-vacio">Cargando...</span>
+      </div>
+    </div>
+
+    <!-- Instalados -->
+    <div class="juegos-seccion" id="sec-instalados" style="display:none">
+      <h3>✅ Instalados <span class="count" id="cnt-instalados">0</span></h3>
+      <div class="juegos-carrusel" id="car-instalados"></div>
+    </div>
+
+    <!-- En biblioteca -->
+    <div class="juegos-seccion" id="sec-biblioteca" style="display:none">
+      <h3>📚 En Biblioteca <span class="count" id="cnt-biblioteca">0</span></h3>
+      <div class="juegos-carrusel" id="car-biblioteca"></div>
+    </div>
+
+    <!-- Descargados -->
+    <div class="juegos-seccion" id="sec-descargados" style="display:none">
+      <h3>⬇️ Descargados <span class="count" id="cnt-descargados">0</span></h3>
+      <div class="juegos-carrusel" id="car-descargados"></div>
+    </div>
+
+    <!-- Por descargar -->
+    <div class="juegos-seccion" id="sec-pordescargar" style="display:none">
+      <h3>📥 Por Descargar <span class="count" id="cnt-pordescargar">0</span></h3>
+      <div class="juegos-carrusel" id="car-pordescargar"></div>
+    </div>
+
+    <!-- Falta recursos -->
+    <div class="juegos-seccion" id="sec-recursos" style="display:none">
+      <h3>⚠️ Falta Recursos <span class="count" id="cnt-recursos">0</span></h3>
+      <div class="juegos-carrusel" id="car-recursos"></div>
+    </div>
+
+    <!-- Deseados -->
+    <div class="juegos-seccion" id="sec-deseados" style="display:none">
+      <h3>❤️ Deseados <span class="count" id="cnt-deseados">0</span></h3>
+      <div class="juegos-carrusel" id="car-deseados"></div>
+    </div>
+
+    <!-- Terminados -->
+    <div class="juegos-seccion" id="sec-terminados" style="display:none">
+      <h3>🏆 Terminados <span class="count" id="cnt-terminados">0</span></h3>
+      <div class="juegos-carrusel" id="car-terminados"></div>
+    </div>
+
+  </div>
+
+  <!-- ── Modal Detalle / Edición Juego ── -->
+  <div class="detail-modal" id="modalDetalle">
+    <div class="detail-bg" id="md-bg"></div>
+    <div class="close-modal" onclick="cerrarModal()">×</div>
+
+    <div class="juego-modal-content">
+      <img src="" id="md-poster" class="juego-modal-poster">
+
+      <div class="juego-modal-info">
+        <h2 class="juego-modal-title" id="md-title">Título</h2>
+        <div class="juego-modal-meta" id="md-meta"></div>
+
+        <div class="juego-tags" id="md-generos"></div>
+        <div class="juego-tags" id="md-plataformas"></div>
+
+        <div class="juego-modal-desc" id="md-desc"></div>
+
+        <hr class="juego-modal-divider">
+
+        <div>
+          <div class="juego-modal-label">Mover a sección:</div>
+          <select class="juego-modal-select" id="md-estado">
+            <option value="instalado">✅ Instalado</option>
+            <option value="en_biblioteca">📚 En Biblioteca</option>
+            <option value="descargado_no_instalable">⬇️ Descargado</option>
+            <option value="por_descargar">📥 Por Descargar</option>
+            <option value="descargado_no_instalable_recursos">⚠️ Falta Recursos</option>
+            <option value="deseado">❤️ Deseado</option>
+            <option value="terminado">🏆 Terminado</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="juego-modal-label">Notas personales:</div>
+          <textarea class="juego-modal-textarea" id="md-notas" rows="3"
+            placeholder="Notas, cuenta, cómo lo conseguiste..."></textarea>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-emby" onclick="guardarEdicion()">💾 Guardar</button>
+          <button class="btn btn-trailer" onclick="abrirBuscadorActualizacion()">🔍 Buscar en IGDB</button>
+          <button class="btn btn-quitar" onclick="eliminarJuego()">🗑️ Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal Buscador IGDB ── -->
+  <div class="igdb-overlay" id="modalIGDB">
+    <div class="igdb-box">
+      <span class="igdb-close" onclick="cerrarIGDB()">×</span>
+      <h2>Buscar Juego</h2>
+      <p>Escribe el nombre para obtener portada y datos automáticamente.</p>
+
+      <input type="text" id="igdbInput" class="igdb-input" placeholder="Ej: Cyberpunk 2077...">
+
+      <div id="igdb-modo-label" class="juego-modal-label" style="margin-bottom:6px;">Agregar en sección:</div>
+      <select class="igdb-estado-select" id="igdbEstado">
+        <option value="instalado">✅ Instalado</option>
+        <option value="en_biblioteca">📚 En Biblioteca</option>
+        <option value="descargado_no_instalable">⬇️ Descargado</option>
+        <option value="por_descargar">📥 Por Descargar</option>
+        <option value="descargado_no_instalable_recursos">⚠️ Falta Recursos</option>
+        <option value="deseado" selected>❤️ Deseado</option>
+        <option value="terminado">🏆 Terminado</option>
+      </select>
+
+      <div id="igdbLoading" class="igdb-loading" style="display:none">Buscando...</div>
+      <div class="igdb-results" id="igdbResults"></div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/juegos.js"></script>
+
+  <nav class="mobile-nav">
+    <a href="/portal"><span class="nav-icon">🏠</span><span>Inicio</span></a>
+    <a href="/media/peliculas"><span class="nav-icon">🎬</span><span>Peliculas</span></a>
+    <a href="/media/series"><span class="nav-icon">📺</span><span>Series</span></a>
+    <a href="/media/buscar"><span class="nav-icon">🔍</span><span>Buscar</span></a>
+    <a href="/juegos"><span class="nav-icon">🎮</span><span>Juegos</span></a>
+  </nav>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+
+</html>

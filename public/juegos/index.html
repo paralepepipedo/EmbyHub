@@ -1,624 +1,867 @@
 <!DOCTYPE html>
-<!-- ============================================================
-     RUTA: public/juegos/index.html
-     VERSIÓN: v2.0
-     Rediseño completo del módulo de juegos
-============================================================ -->
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Juegos - EmbyHub</title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/mobile.css" media="(max-width: 768px)">
-  <style>
-    /* ── Variables locales ── */
-    :root {
-      --border-color: #2a2a2a;
-      --bg-modal: #141414;
-      --bg-input: #1e1e1e;
-    }
-
-    /* ── Topbar nav juegos ── */
-    .topbar .nav-links a {
-      color: var(--text-muted);
-    }
-
-    .topbar .nav-links a.active {
-      color: white;
-      border-bottom: 2px solid var(--accent);
-    }
-
-    /* ── Secciones ── */
-    .juegos-seccion {
-      margin-bottom: 3rem;
-    }
-
-    .juegos-seccion h3 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .juegos-seccion h3 .count {
-      font-size: 0.8rem;
-      background: var(--border-color);
-      color: var(--text-muted);
-      border-radius: 20px;
-      padding: 2px 10px;
-      font-weight: 400;
-    }
-
-    /* ── Cards de juegos ── */
-    .juegos-carrusel {
-      display: flex;
-      gap: 1rem;
-      overflow-x: auto;
-      padding-bottom: 1rem;
-      scrollbar-width: thin;
-      scrollbar-color: #333 transparent;
-    }
-
-    .juegos-carrusel::-webkit-scrollbar {
-      height: 6px;
-    }
-
-    .juegos-carrusel::-webkit-scrollbar-thumb {
-      background: #333;
-      border-radius: 3px;
-    }
-
-    .juego-card {
-      flex: 0 0 150px;
-      position: relative;
-      border-radius: 10px;
-      overflow: hidden;
-      cursor: pointer;
-      background: var(--bg-card);
-      transition: transform 0.25s, box-shadow 0.25s;
-    }
-
-    .juego-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-      z-index: 10;
-    }
-
-    .juego-card img {
-      width: 150px;
-      height: 200px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .juego-card .info {
-      padding: 0.5rem 0.6rem 0.6rem;
-      background: linear-gradient(transparent, var(--bg-card));
-    }
-
-    .juego-card .info .title {
-      font-size: 0.8rem;
-      font-weight: 600;
-      line-height: 1.3;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .juego-card .info .year {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* Badges de estado para juegos */
-    .juego-badge {
-      position: absolute;
-      top: 7px;
-      left: 7px;
-      font-size: 0.6rem;
-      font-weight: 700;
-      padding: 3px 7px;
-      border-radius: 4px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      backdrop-filter: blur(4px);
-    }
-
-    .juego-badge.instalado {
-      background: rgba(82, 181, 75, 0.9);
-      color: #fff;
-    }
-
-    .juego-badge.en_biblioteca {
-      background: rgba(33, 150, 243, 0.9);
-      color: #fff;
-    }
-
-    .juego-badge.descargado {
-      background: rgba(255, 152, 0, 0.9);
-      color: #fff;
-    }
-
-    .juego-badge.por_descargar {
-      background: rgba(156, 39, 176, 0.9);
-      color: #fff;
-    }
-
-    .juego-badge.falta_recursos {
-      background: rgba(120, 120, 120, 0.9);
-      color: #fff;
-    }
-
-    .juego-badge.deseado {
-      background: rgba(229, 9, 20, 0.9);
-      color: #fff;
-    }
-
-    .juego-badge.proximo {
-      background: rgba(0, 188, 212, 0.9);
-      color: #fff;
-    }
-
-    .juego-badge.terminado {
-      background: rgba(255, 215, 0, 0.9);
-      color: #000;
-    }
-
-    /* ── Modal detalle juego ── */
-    .juego-modal-content {
-      position: relative;
-      z-index: 910;
-      display: flex;
-      flex-direction: row;
-      gap: 2.5rem;
-      width: 100%;
-      max-width: 860px;
-      margin: 80px auto 60px;
-      padding: 0 1.5rem;
-      align-items: flex-start;
-      box-sizing: border-box;
-    }
-
-    .juego-modal-poster {
-      flex: 0 0 200px;
-      width: 200px;
-      border-radius: 10px;
-      object-fit: cover;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
-    }
-
-    .juego-modal-info {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .juego-modal-title {
-      font-size: 1.8rem;
-      font-weight: 800;
-      line-height: 1.2;
-    }
-
-    .juego-modal-meta {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-
-    .juego-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-    }
-
-    .juego-tag {
-      background: var(--border-color);
-      border: 1px solid #333;
-      border-radius: 20px;
-      padding: 3px 10px;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-
-    .juego-tag.plat {
-      background: #1565C0;
-      color: white;
-      border-color: #1565C0;
-    }
-
-    .juego-modal-desc {
-      font-size: 0.9rem;
-      line-height: 1.7;
-      color: #ccc;
-      max-height: 100px;
-      overflow-y: auto;
-    }
-
-    .juego-modal-divider {
-      border: none;
-      border-top: 1px solid var(--border-color);
-      margin: 0.5rem 0;
-    }
-
-    .juego-modal-label {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-
-    .juego-modal-select {
-      width: 100%;
-      padding: 0.6rem 0.8rem;
-      font-size: 0.95rem;
-      border-radius: 8px;
-      border: 1px solid #333;
-      background: var(--bg-input);
-      color: var(--text);
-      outline: none;
-      cursor: pointer;
-    }
-
-    .juego-modal-select:focus {
-      border-color: var(--accent);
-    }
-
-    .juego-modal-textarea {
-      width: 100%;
-      padding: 0.6rem 0.8rem;
-      font-size: 0.9rem;
-      border-radius: 8px;
-      border: 1px solid #333;
-      background: var(--bg-input);
-      color: var(--text);
-      outline: none;
-      resize: vertical;
-      min-height: 60px;
-      font-family: inherit;
-    }
-
-    .juego-modal-textarea:focus {
-      border-color: var(--accent);
-    }
-
-    /* ── Modal IGDB buscador ── */
-    .igdb-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      z-index: 950;
-      display: none;
-      align-items: flex-start;
-      justify-content: center;
-      overflow-y: auto;
-      padding: 5vh 1rem;
-    }
-
-    .igdb-overlay.active {
-      display: flex;
-    }
-
-    .igdb-box {
-      background: var(--bg-card);
-      border-radius: 12px;
-      padding: 2rem;
-      width: 100%;
-      max-width: 600px;
-      position: relative;
-    }
-
-    .igdb-box h2 {
-      margin-bottom: 0.4rem;
-    }
-
-    .igdb-box p {
-      color: var(--text-muted);
-      font-size: 0.88rem;
-      margin-bottom: 1rem;
-    }
-
-    .igdb-input {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      font-size: 1rem;
-      border-radius: 8px;
-      border: 1px solid #333;
-      background: var(--bg-input);
-      color: var(--text);
-      outline: none;
-      margin-bottom: 1rem;
-    }
-
-    .igdb-input:focus {
-      border-color: var(--accent);
-    }
-
-    /* Selector de sección al agregar */
-    .igdb-estado-select {
-      width: 100%;
-      padding: 0.6rem 0.8rem;
-      font-size: 0.9rem;
-      border-radius: 8px;
-      border: 1px solid #333;
-      background: var(--bg-input);
-      color: var(--text);
-      outline: none;
-      margin-bottom: 1rem;
-      cursor: pointer;
-    }
-
-    .igdb-estado-select:focus {
-      border-color: var(--accent);
-    }
-
-    .igdb-results {
-      max-height: 420px;
-      overflow-y: auto;
-    }
-
-    .igdb-item {
-      display: flex;
-      gap: 12px;
-      padding: 10px;
-      border-bottom: 1px solid var(--border-color);
-      cursor: pointer;
-      align-items: center;
-      transition: background 0.2s;
-    }
-
-    .igdb-item:hover {
-      background: #222;
-    }
-
-    .igdb-item img {
-      width: 48px;
-      height: 64px;
-      object-fit: cover;
-      border-radius: 4px;
-      flex-shrink: 0;
-    }
-
-    .igdb-item-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .igdb-item-title {
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    .igdb-item-meta {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .igdb-close {
-      position: absolute;
-      top: 0.8rem;
-      right: 1rem;
-      font-size: 2rem;
-      cursor: pointer;
-      color: var(--text-muted);
-      line-height: 1;
-    }
-
-    .igdb-close:hover {
-      color: var(--text);
-    }
-
-    .igdb-loading {
-      text-align: center;
-      padding: 1rem;
-      color: var(--text-muted);
-      font-style: italic;
-    }
-
-    /* ── Próximos estrenos IGDB ── */
-    .proximos-seccion {
-      margin-bottom: 3rem;
-    }
-
-    /* ── Vacío / cargando ── */
-    .juegos-vacio {
-      color: var(--text-dim);
-      padding: 0.5rem 0;
-      font-style: italic;
-      font-size: 0.9rem;
-    }
-
-    @media (max-width: 768px) {
-      .juego-modal-content {
-        flex-direction: column;
-        align-items: center;
-        margin-top: 60px;
-        padding: 0 1rem;
-      }
-
-      .juego-modal-poster {
-        width: 140px;
-        flex: none;
-      }
-
-      .juego-modal-title {
-        font-size: 1.4rem;
-      }
-    }
-  </style>
-  <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <meta name="theme-color" content="#52b54b">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="EmbyHub">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Juegos · EmbyHub</title>
+<!-- No se enlaza /css/styles.css ni /css/mobile.css: sus clases (.topbar, .card, .modal…)
+     chocan con las de esta página, que es autocontenida y trae todo su CSS abajo. -->
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id%3D'g'%20x1%3D'0'%20y1%3D'0'%20x2%3D'1'%20y2%3D'1'%3E%3Cstop%20offset%3D'0'%20stop-color%3D'%233b82f6'%2F%3E%3Cstop%20offset%3D'1'%20stop-color%3D'%236366f1'%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D'64'%20height%3D'64'%20rx%3D'14'%20fill%3D'url(%23g)'%2F%3E%3Cg%20fill%3D'none'%20stroke%3D'%23fff'%20stroke-width%3D'4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Crect%20x%3D'10'%20y%3D'20'%20width%3D'44'%20height%3D'26'%20rx%3D'9'%2F%3E%3Cpath%20d%3D'M22%2033h10M27%2028v10'%2F%3E%3C%2Fg%3E%3Ccircle%20cx%3D'40'%20cy%3D'31'%20r%3D'2.6'%20fill%3D'%23fff'%2F%3E%3Ccircle%20cx%3D'47'%20cy%3D'36'%20r%3D'2.6'%20fill%3D'%23fff'%2F%3E%3C%2Fsvg%3E">
+<style>
+:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--accent:#3b82f6;--ok:#4ade80;--warn:#fbbf24;--no:#f87171;--text:#e5e5e5;--muted:#8a8a8a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;height:100vh;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--accent)}
+.app{display:grid;grid-template-columns:224px 1fr 300px;height:100vh}
+/* Sidebar */
+.sidebar{background:linear-gradient(180deg,#151515,#0f0f0f);border-right:1px solid var(--border);padding:16px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 6px 14px}
+.brand .mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#6366f1);display:grid;place-items:center;color:#fff;box-shadow:0 4px 14px rgba(59,130,246,.35);flex:none}
+.brand .mark .ic{vertical-align:0}
+.brand b{display:block;font-size:16px;line-height:1.15;letter-spacing:-.01em}.brand small{color:var(--muted);font-size:11px}
+.sidebar h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#6b6b6b;padding:14px 10px 6px;font-weight:600}
+.nav{position:relative;display:flex;align-items:center;gap:10px;background:none;border:0;border-radius:8px;padding:8px 10px;text-align:left;width:100%;color:#b4b4b4;font-size:13.5px;transition:background .12s,color .12s}
+.nav .ic{flex:none;vertical-align:0}.nav .lb{flex:1}
+.nav small{background:#222;color:var(--muted);border-radius:10px;padding:1px 7px;font-size:11px;min-width:22px;text-align:center}
+.nav:hover{background:#1c1c1c;color:#fff}
+.nav.active{background:rgba(59,130,246,.14);color:#fff}
+.nav.active::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.nav.active small{background:var(--accent);color:#fff}
+.sidebar>.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:6px;padding:9px 12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar .btn .ic{vertical-align:0}
+.btn.ghost{background:transparent}.btn.ghost:hover{background:#1c1c1c}
+.btn.primary:hover{background:#2f6fd6}
+.actions2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.actions2 .btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 6px;font-size:12.5px}
+.spacer{flex:1;min-height:12px}
+.pcCard{background:#161616;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:12px}
+.pcCard h5{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#6b6b6b;margin-bottom:6px;font-weight:600}
+.pcRow{display:flex;align-items:center;gap:9px;font-size:12px;color:#c9c9c9;padding:3px 0}.pcRow .ic{color:var(--accent);flex:none;vertical-align:0}
+.searchbox{flex:1;position:relative;display:flex;align-items:center}
+.searchbox .ic{position:absolute;left:11px;color:var(--muted);pointer-events:none;vertical-align:0}
+.topbar input{padding-left:36px!important}
+.ic{display:inline-block;vertical-align:-3px}
+.c-info{color:var(--accent)}
+/* Buttons */
+.btn{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 12px}
+.btn:hover{border-color:#444}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--no)}
+/* Main */
+.main{display:flex;flex-direction:column;min-width:0;height:100vh}
+.topbar{display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center}
+.topbar input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 12px;outline:0}
+.topbar input:focus{border-color:var(--accent)}
+.grid{flex:1;overflow-y:auto;padding:28px 26px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));grid-auto-rows:max-content;gap:14px;align-content:start}
+.card{position:relative;align-self:start;border-radius:8px;overflow:hidden;background:var(--card);border:2px solid var(--border);cursor:pointer;transition:transform .18s ease,border-color .18s,box-shadow .18s}
+.card:hover{transform:scale(1.1);z-index:10;border-color:var(--accent);box-shadow:0 14px 34px rgba(0,0,0,.75)}.card.sel{border-color:var(--accent)}
+.card::before{content:"";display:block;padding-top:150%}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#000}
+.card:hover img{object-fit:contain}
+.card .info b{transition:opacity .15s}.card .info{transition:background .15s}
+@media(hover:hover){.card:hover .info{background:none}.card:hover .info>b{opacity:0}.card:hover .perf{display:inline-flex;background:rgba(10,10,10,.82);border-radius:8px;padding:3px 8px;backdrop-filter:blur(4px)}}
+.card .badge{position:absolute;top:6px;left:6px;background:rgba(10,10,10,.78);border-radius:50%;padding:4px;line-height:0;backdrop-filter:blur(4px)}
+.card .badge .ic{vertical-align:0}
+.chip{position:absolute;top:6px;right:6px;display:flex;align-items:center;gap:4px;background:rgba(10,10,10,.8);backdrop-filter:blur(4px);border:1px solid var(--c);color:var(--c);border-radius:20px;padding:2px 7px 2px 5px;font-size:10px;font-weight:600;line-height:1.3}
+.chip .ic{vertical-align:0}
+.card .info{position:absolute;left:0;right:0;bottom:0;padding:24px 8px 8px;background:linear-gradient(transparent,rgba(0,0,0,.92))}
+.card .info b{display:block;font-size:12px;line-height:1.25;max-height:2.5em;overflow:hidden}
+.card .info span{font-size:11px;color:var(--muted)}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 0}
+/* Detail */
+.detail{background:#141414;border-left:1px solid var(--border);overflow-y:auto;height:100vh}
+.detail .placeholder{color:var(--muted);text-align:center;padding:80px 20px}
+.dimg{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top;display:block}
+.dbody{padding:14px}
+.dbody h2{font-size:17px;line-height:1.25}
+.dmeta{color:var(--muted);font-size:12px;margin:2px 0 10px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 9px}
+.stat small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.stat b{font-size:13px}
+.c-ok{color:var(--ok)}.c-warn{color:var(--warn)}.c-no{color:var(--no)}
+.sec{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 0 6px}
+.bar{display:grid;grid-template-columns:52px 1fr 58px;gap:8px;align-items:center;margin-bottom:5px;font-size:12px}
+.bar .t{background:#262626;border-radius:4px;height:8px;overflow:hidden}.bar .t i{display:block;height:100%;border-radius:4px}
+.bar span:last-child{text-align:right;color:var(--muted)}
+.reco{border:1px solid var(--accent);background:rgba(59,130,246,.1);border-radius:8px;padding:10px;font-size:13px}
+.reco.warn{border-color:var(--warn);background:rgba(251,191,36,.08)}.reco.no{border-color:var(--no);background:rgba(248,113,113,.08)}
+.notes li{list-style:none;padding:4px 0;font-size:12.5px;line-height:1.4;display:flex;gap:6px}
+.sbtns{display:flex;flex-wrap:wrap;gap:5px}
+.sbtns button{display:inline-flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:4px 10px;font-size:12px}
+.sbtns button .ic{color:var(--c);vertical-align:0}
+.sbtns button.on{background:var(--c);border-color:var(--c);color:#111;font-weight:600}.sbtns button.on .ic{color:#111}
+.links{display:flex;flex-direction:column;gap:6px}
+.links input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;outline:0}
+.links input:focus{border-color:var(--accent)}
+.lrow{display:flex;gap:6px}.lrow a{white-space:nowrap;text-decoration:none;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:12px}
+table.cmp{width:100%;border-collapse:collapse;font-size:11.5px}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--border);padding:5px 4px;text-align:left;vertical-align:top}
+table.cmp th{color:var(--muted);font-weight:500;font-size:10px;text-transform:uppercase}
+.dactions{display:flex;gap:6px;margin-top:14px}
+.closeDetail{display:none}
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.hidden{display:none!important}.tok{-webkit-text-security:disc}
+.shots{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.shots img{height:64px;border-radius:4px;display:block}.shot{position:relative}.shot button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.75);border:0;border-radius:50%;width:18px;height:18px;line-height:18px;font-size:12px;padding:0}
+.results.wide{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}.results.wide .res img{aspect-ratio:16/9}.res.cover img{aspect-ratio:3/4}.pkb{display:flex;gap:4px;margin-top:5px}.pkb button{flex:1;padding:4px 2px;font-size:11px;background:#1a1a1a;border:1px solid var(--border);border-radius:5px}.pkb button.on{background:var(--accent);border-color:var(--accent);color:#fff}.res.iscover{border-color:var(--accent)}
+.mbox{background:var(--card);border:1px solid var(--border);border-radius:10px;width:100%;max-width:720px;padding:18px;max-height:calc(100vh - 32px);overflow-y:auto}
+.mhead{position:sticky;top:-18px;z-index:3;background:var(--card);padding:6px 0;margin-top:-6px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tabs button{background:#111;border:1px solid var(--border);border-radius:6px;padding:6px 12px}
+.tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.pane{background:#111;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px}
+.pane textarea{width:100%;height:170px;resize:vertical}
+input,select,textarea{background:#111;border:1px solid var(--border);border-radius:6px;padding:6px 8px;outline:0;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select option{background:#111}
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+.fg{display:grid;gap:10px;margin-bottom:10px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}.g4{grid-template-columns:repeat(4,1fr)}
+.fs{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 0 8px;border-top:1px solid var(--border);padding-top:10px}
+.preview{margin-top:10px;font-size:12px;line-height:1.6;background:#0c0c0c;border-radius:6px;padding:8px 10px}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:10px}
+.res{cursor:pointer;font-size:11px;background:#0c0c0c;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.res:hover{border-color:var(--accent)}.res img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:#222}.res div{padding:5px}
+.drop{border:2px dashed var(--border);border-radius:8px;padding:12px;text-align:center;color:var(--muted);font-size:12px;cursor:pointer}
+.drop.over{border-color:var(--accent);color:var(--accent)}
+.imgrow{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:start}
+.imgrow img{width:110px;aspect-ratio:2/3;object-fit:cover;border-radius:6px;background:#222}
+.hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+.row{display:flex;gap:8px;align-items:center}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#222;border:1px solid var(--border);padding:8px 16px;border-radius:8px;z-index:99}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#333;border-radius:4px}
+@media(max-width:1000px){
+  .app{grid-template-columns:224px 1fr}
+  .detail{position:fixed;right:0;top:0;bottom:0;width:min(340px,100%);z-index:30;transform:translateX(100%);transition:transform .2s;box-shadow:-10px 0 30px rgba(0,0,0,.6)}
+  .detail.open{transform:none}
+  .closeDetail{display:block;position:absolute;top:8px;right:8px;z-index:2;background:rgba(0,0,0,.7);border:0;border-radius:50%;width:28px;height:28px}
+}
+.hamb,.fab,.sclose{display:none}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:55;opacity:0;pointer-events:none;transition:opacity .2s}.backdrop.show{opacity:1;pointer-events:auto}
+@media(hover:none){.card:hover{transform:none;z-index:auto;box-shadow:none;border-color:var(--border)}.card:hover img{object-fit:cover}.card:hover .info{opacity:1}}
+@media(max-width:700px){
+  .app{display:block;height:100dvh}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:284px;max-width:86vw;z-index:60;transform:translateX(-100%);transition:transform .22s ease;box-shadow:12px 0 40px rgba(0,0,0,.6)}
+  .sidebar.open{transform:none}
+  .main{height:100dvh}
+  .topbar{padding:10px 12px;gap:8px}
+  .hamb{display:grid;place-items:center;width:42px;height:42px;flex:none;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text)}
+  .hamb .ic{vertical-align:0}
+  .sclose{display:grid;place-items:center;margin-left:auto;width:34px;height:34px;background:none;border:0;color:var(--muted);font-size:26px;line-height:1}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;padding:14px 12px 90px}
+  .chip{font-size:9px;padding:1px 5px 1px 4px}.card .info b{font-size:11px}
+  .fab{display:grid;place-items:center;position:fixed;right:16px;bottom:18px;width:54px;height:54px;border-radius:50%;background:var(--accent);border:0;color:#fff;box-shadow:0 8px 22px rgba(59,130,246,.5);z-index:20}
+  .fab .ic{vertical-align:0}
+  .detail{width:100%}
+  input,select,textarea{font-size:16px}
+  .modal{padding:0;align-items:stretch}.mbox{max-width:none;border-radius:0;max-height:100dvh;height:100dvh}
+  .g2,.g3,.g4{grid-template-columns:1fr 1fr}
+  .imgrow{grid-template-columns:90px 1fr}.imgrow img{width:90px}
+}
+.shots img,.dimg{cursor:zoom-in}
+.btn.danger-solid{background:#dc2626;border-color:#dc2626;color:#fff}.btn.danger-solid:hover{background:#b91c1c}
+#dlg.modal{align-items:center;padding:16px;z-index:100}
+#dlg .mbox{height:auto;max-height:none;max-width:420px;border-radius:12px}
+#dlg h2{font-size:17px;margin-bottom:8px}.dlgmsg{color:#b8b8b8;line-height:1.5;font-size:14px}
+#lightbox.modal{z-index:90;background:rgba(0,0,0,.94);padding:0;align-items:center}
+#lightbox img{max-width:94vw;max-height:88vh;object-fit:contain;border-radius:6px;box-shadow:0 10px 50px rgba(0,0,0,.7)}
+.lbx,.lbn{position:absolute;background:rgba(255,255,255,.1);border:0;color:#fff;border-radius:50%;width:44px;height:44px;font-size:24px;display:grid;place-items:center;backdrop-filter:blur(4px)}
+.lbx{top:16px;right:16px}.lbn{top:50%;transform:translateY(-50%)}.lbn.prev{left:16px}.lbn.next{right:16px}
+.lbx:hover,.lbn:hover{background:rgba(255,255,255,.22)}
+#lightbox.single .lbn{display:none}
+.lbc{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:#ccc;font-size:13px;background:rgba(0,0,0,.5);padding:3px 12px;border-radius:12px}
+.meter{display:inline-flex;gap:2px;align-items:flex-end;height:12px;vertical-align:middle}
+.meter i{display:block;width:4px;background:#3a3a3a;border-radius:1px}
+.meter i:nth-child(1){height:4px}.meter i:nth-child(2){height:7px}.meter i:nth-child(3){height:10px}.meter i:nth-child(4){height:12px}
+.meter i.on{background:var(--mc)}
+.card .perf{display:flex;align-items:center;gap:6px;margin-top:3px}
+.card .perf span{font-size:11px;color:var(--muted)}.card .perf span b{display:inline;font-size:11px;max-height:none;color:#ddd;font-weight:600}
+.stat b .meter{margin-right:4px}
+.dtitle{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}.dtitle h2{flex:1}
+.editTop{flex:none;display:grid;place-items:center;width:36px;height:36px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text)}.editTop:hover{border-color:var(--accent);color:var(--accent)}.editTop .ic{vertical-align:0}
+.upcard{background:#0c0c0c;border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.upcard img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:#000}
+.upcard .ub{padding:8px 9px;display:flex;flex-direction:column;gap:4px;flex:1}
+.upcard b{font-size:12.5px;line-height:1.25}
+.upcard .date{font-size:11px;color:var(--accent);font-weight:600}
+.upcard .tags{font-size:10.5px;color:var(--muted);line-height:1.4}
+.upcard .hype{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:#fbbf24;margin-top:auto}
+.upcard button{margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px;font-size:11.5px;display:flex;align-items:center;justify-content:center;gap:4px}
+.upcard button:hover{border-color:var(--accent);color:var(--accent)}
+.upcard button.added{border-color:var(--ok);color:var(--ok)}
+.upgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+@media(max-width:700px){.upgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
+.backportal{position:absolute;top:14px;right:14px;width:26px;height:26px;display:grid;place-items:center;color:var(--muted);text-decoration:none;font-size:20px;border-radius:6px}.backportal:hover{background:#1c1c1c;color:#fff}
+.sidebar{position:relative}
+</style>
 </head>
-
 <body>
+<div class="app">
+  <aside class="sidebar">
+    <a href="/portal" class="backportal" title="Volver al portal" aria-label="Volver al portal">‹</a>
+    <div class="brand"><div class="mark"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/></svg></div><div><b>MyGameLib</b><small><span id="totalGames">0</span> juegos</small></div><button class="sclose" id="btnMenuClose" aria-label="Cerrar menú">×</button></div>
+    <h4>Biblioteca</h4>
+    <div id="navStatus"></div>
+    <h4>Compatibilidad</h4>
+    <div id="navCompat"></div>
+    <div class="spacer"></div>
+    <button class="btn ghost" id="btnUpcoming"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> Próximos</button>
+    <button class="btn primary" id="btnAdd"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar juego</button>
+    <button class="btn ghost" id="btnCovers" title="Buscar carátulas en IGDB"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Carátulas IGDB</button>
+    <div class="actions2">
+      <button class="btn ghost" id="btnExport" title="Exportar JSON"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>
+      <button class="btn ghost" id="btnImport" title="Importar JSON"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Importar</button>
+    </div>
+    <input type="file" id="fileImport" accept=".json,application/json" class="hidden">
+    <div class="pcCard">
+      <h5>Mi PC</h5>
+      <div class="pcRow"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg><span>Ryzen 5 3600</span></div>
+      <div class="pcRow"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span>RX 580 2048SP · 8 GB</span></div>
+      <div class="pcRow"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><span>16 GB RAM</span></div>
+      <div class="pcRow"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg><span>Disco HDD</span></div>
+    </div>
+  </aside>
 
-  <!-- Topbar -->
-  <div class="topbar">
-    <div class="nav-links">
-      <a href="/portal" style="font-size: 1.5rem; border: none; padding: 0;">⬅️</a>
-      <a href="/juegos" class="active">🎮 Juegos</a>
-    </div>
-    <button class="btn btn-add" onclick="abrirBuscadorIGDB()">+ Agregar Juego</button>
-    <div class="user-info" onclick="logout()">
-      <span id="userName">Hola</span>
-      <div class="avatar" id="userAvatar">🎮</div>
-    </div>
+  <main class="main">
+    <div class="topbar"><button class="hamb" id="btnMenu" aria-label="Menú"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="searchbox"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="search" type="text" name="mgl-filter" placeholder="Buscar juego por nombre…" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')"></div></div>    <div class="grid" id="grid"></div>
+  </main>
+
+  <aside class="detail" id="detail"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <button class="fab" id="btnFab" aria-label="Agregar juego"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+</div>
+
+<div class="modal hidden" id="igModal"><div class="mbox" style="max-width:520px">
+  <div class="mhead"><h2>Carátulas desde IGDB</h2><button class="btn" id="igmClose">✕</button></div>
+  <label style="display:flex;gap:6px;align-items:center;color:var(--text);margin:8px 0"><input type="checkbox" id="bAll" style="width:auto"> Reemplazar también las que ya tienen imagen</label>
+  <div class="row"><button class="btn primary" id="bStart">Buscar carátulas</button><span id="bStat" class="hint" style="margin:0"></span></div>
+  <div class="preview" id="bLog" style="max-height:200px;overflow:auto;margin-top:10px">Busca por nombre cada juego de la biblioteca y guarda la carátula (y año/género/desarrollador si faltan).</div>
+</div></div>
+
+<div class="modal hidden" id="upModal"><div class="mbox" style="max-width:920px">
+  <div class="mhead"><h2>🚀 Próximos lanzamientos</h2><button class="btn" id="upClose">✕</button></div>
+  <div class="hint" style="margin-bottom:10px">Los próximos 6 meses en IGDB, ordenados por interés de la comunidad. Aún no tienen datos de rendimiento en tu PC — agrégalos y complétalos cuando salgan specs o los pruebes.</div>
+  <div id="upBody"><div class="hint">Cargando…</div></div>
+</div></div>
+<div class="modal hidden" id="dlg"><div class="mbox">
+  <h2 id="dlgTitle"></h2><p class="dlgmsg" id="dlgMsg"></p>
+  <div class="row" id="dlgBtns" style="justify-content:flex-end;margin-top:18px"></div>
+</div></div>
+<div class="modal hidden" id="lightbox">
+  <button class="lbx" id="lbClose" aria-label="Cerrar">✕</button>
+  <button class="lbn prev" id="lbPrev" aria-label="Anterior">‹</button>
+  <img id="lbImg" alt="">
+  <button class="lbn next" id="lbNext" aria-label="Siguiente">›</button>
+  <div class="lbc" id="lbCount"></div>
+</div>
+<div class="modal hidden" id="pickModal" style="z-index:70"><div class="mbox" style="max-width:820px">
+  <div class="mhead"><h2>Buscar imagen en IGDB</h2><button class="btn primary" id="pkClose">✓ Listo</button></div>
+  <div class="row"><input id="pkQuery" placeholder="Nombre del juego…" autocomplete="off"><button class="btn primary" id="pkGo" type="button">Buscar</button></div>
+  <div class="results" id="pkResults"></div>
+  <div id="pkDetail" class="hidden">
+    <div class="fs">Elige una imagen</div>
+    <div class="hint" style="margin:0 0 8px">Cada imagen tiene dos botones: <b>Carátula</b> (reemplaza la portada) y <b>Galería</b> (añade o quita de las capturas). Puedes usar ambos a la vez.</div>
+    <div class="results wide" id="pkImgs"></div>
   </div>
+</div></div>
 
-  <div class="page-content">
-
-    <!-- Próximos estrenos -->
-    <div class="juegos-seccion" id="sec-proximos">
-      <h3>🔜 Próximos Estrenos <span class="count" id="cnt-proximos">0</span></h3>
-      <div class="juegos-carrusel" id="car-proximos">
-        <span class="juegos-vacio">Cargando...</span>
-      </div>
+<!-- Modal agregar / editar -->
+<div class="modal hidden" id="modal">
+  <div class="mbox">
+    <div class="mhead"><h2 id="mtitle">Agregar juego</h2><div class="row"><button class="btn danger hidden" type="button" id="mDelete" title="Eliminar juego">🗑 Eliminar</button><button class="btn primary" type="submit" form="form" id="mSave" title="Guardar">💾</button><button class="btn" id="mclose">✕</button></div></div>
+    <div class="tabs" id="tabs">
+      <button data-tab="A" class="on">A · Importar de Claude</button>
+      <button data-tab="B">B · Buscar en IGDB</button>
+      <button data-tab="C">C · Manual</button>
     </div>
 
-    <!-- Instalados -->
-    <div class="juegos-seccion" id="sec-instalados" style="display:none">
-      <h3>✅ Instalados <span class="count" id="cnt-instalados">0</span></h3>
-      <div class="juegos-carrusel" id="car-instalados"></div>
+    <div class="pane" id="paneA">
+      <label>Pega aquí la respuesta de Claude</label>
+      <textarea id="claudeText" placeholder="## 🎮 Nombre del juego&#10;### ✅ Corre bien&#10;👉 Recomendación: Ultra — ...&#10;| 🔴 Ultra | 65–75 |&#10;| **CPU** | mínimo | recomendado |&#10;- ✅ nota"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn primary" id="btnParse">Parsear automáticamente</button><span class="hint" style="margin:0">Los campos se rellenan abajo; revisa y guarda.</span></div>
+      <div class="preview hidden" id="parsePreview"></div>
     </div>
 
-    <!-- En biblioteca -->
-    <div class="juegos-seccion" id="sec-biblioteca" style="display:none">
-      <h3>📚 En Biblioteca <span class="count" id="cnt-biblioteca">0</span></h3>
-      <div class="juegos-carrusel" id="car-biblioteca"></div>
+    <div class="pane hidden" id="paneB">
+      <div class="row"><input id="igQuery" placeholder="Nombre del juego…"><button class="btn primary" id="btnIg">Buscar</button></div>
+      <div class="results" id="igResults"></div>
     </div>
 
-    <!-- Descargados -->
-    <div class="juegos-seccion" id="sec-descargados" style="display:none">
-      <h3>⬇️ Descargados <span class="count" id="cnt-descargados">0</span></h3>
-      <div class="juegos-carrusel" id="car-descargados"></div>
-    </div>
-
-    <!-- Por descargar -->
-    <div class="juegos-seccion" id="sec-pordescargar" style="display:none">
-      <h3>📥 Por Descargar <span class="count" id="cnt-pordescargar">0</span></h3>
-      <div class="juegos-carrusel" id="car-pordescargar"></div>
-    </div>
-
-    <!-- Falta recursos -->
-    <div class="juegos-seccion" id="sec-recursos" style="display:none">
-      <h3>⚠️ Falta Recursos <span class="count" id="cnt-recursos">0</span></h3>
-      <div class="juegos-carrusel" id="car-recursos"></div>
-    </div>
-
-    <!-- Deseados -->
-    <div class="juegos-seccion" id="sec-deseados" style="display:none">
-      <h3>❤️ Deseados <span class="count" id="cnt-deseados">0</span></h3>
-      <div class="juegos-carrusel" id="car-deseados"></div>
-    </div>
-
-    <!-- Terminados -->
-    <div class="juegos-seccion" id="sec-terminados" style="display:none">
-      <h3>🏆 Terminados <span class="count" id="cnt-terminados">0</span></h3>
-      <div class="juegos-carrusel" id="car-terminados"></div>
-    </div>
-
-  </div>
-
-  <!-- ── Modal Detalle / Edición Juego ── -->
-  <div class="detail-modal" id="modalDetalle">
-    <div class="detail-bg" id="md-bg"></div>
-    <div class="close-modal" onclick="cerrarModal()">×</div>
-
-    <div class="juego-modal-content">
-      <img src="" id="md-poster" class="juego-modal-poster">
-
-      <div class="juego-modal-info">
-        <h2 class="juego-modal-title" id="md-title">Título</h2>
-        <div class="juego-modal-meta" id="md-meta"></div>
-
-        <div class="juego-tags" id="md-generos"></div>
-        <div class="juego-tags" id="md-plataformas"></div>
-
-        <div class="juego-modal-desc" id="md-desc"></div>
-
-        <hr class="juego-modal-divider">
-
+    <form id="form" autocomplete="off">
+      <div class="fs" style="margin-top:0;border-top:0;padding-top:0">Imagen</div>
+      <div class="imgrow">
+        <img id="fImgPrev" alt="">
         <div>
-          <div class="juego-modal-label">Mover a sección:</div>
-          <select class="juego-modal-select" id="md-estado">
-            <option value="instalado">✅ Instalado</option>
-            <option value="en_biblioteca">📚 En Biblioteca</option>
-            <option value="descargado_no_instalable">⬇️ Descargado</option>
-            <option value="por_descargar">📥 Por Descargar</option>
-            <option value="descargado_no_instalable_recursos">⚠️ Falta Recursos</option>
-            <option value="deseado">❤️ Deseado</option>
-            <option value="terminado">🏆 Terminado</option>
-          </select>
-        </div>
-
-        <div>
-          <div class="juego-modal-label">Notas personales:</div>
-          <textarea class="juego-modal-textarea" id="md-notas" rows="3"
-            placeholder="Notas, cuenta, cómo lo conseguiste..."></textarea>
-        </div>
-
-        <div class="action-buttons">
-          <button class="btn btn-emby" onclick="guardarEdicion()">💾 Guardar</button>
-          <button class="btn btn-trailer" onclick="abrirBuscadorActualizacion()">🔍 Buscar en IGDB</button>
-          <button class="btn btn-quitar" onclick="eliminarJuego()">🗑️ Eliminar</button>
+          <label>URL de imagen</label><input id="fImgUrl" placeholder="https://…">
+          <div class="drop" id="drop" style="margin-top:8px">Arrastra una imagen, haz clic para subir, o pega con Ctrl+V</div>
+          <input type="file" id="fImgFile" accept="image/*" class="hidden">
+          <div class="row" style="margin-top:8px;flex-wrap:wrap"><button type="button" class="btn" id="btnCover">Buscar carátula en IGDB</button><button type="button" class="btn" id="btnPasteImg">📋 Pegar imagen</button><button type="button" class="btn" id="btnClearImg">Quitar</button></div>
         </div>
       </div>
-    </div>
+
+      <div class="shots" id="fShots"></div>
+      <div class="fs">Datos</div>
+      <div class="fg g2"><div><label>Nombre *</label><input id="fName" required></div><div><label>Desarrollador</label><input id="fDev"></div></div>
+      <div class="fg g3"><div><label>Año</label><input id="fYear" type="number"></div><div><label>Género</label><input id="fGenre"></div><div><label>Espacio (GB)</label><input id="fGB" type="number" min="0" step="any"></div></div>
+      <div class="fg g4">
+        <div><label>Compatibilidad</label><select id="fCompat"><option value="ok">Sí corre</option><option value="warn">Con limitaciones</option><option value="no">No compatible</option></select></div>
+        <div><label>Calidad recomendada</label><input id="fQuality"></div>
+        <div><label>Estado</label><select id="fStatus"></select></div>
+        <div><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;color:var(--text);margin-top:8px"><input type="checkbox" id="fSSD" style="width:auto"> Requiere SSD</label></div>
+      </div>
+      <div class="fs">FPS por calidad</div>
+      <div class="fg g4"><div><label>🔴 Ultra</label><input id="fpsUltra"></div><div><label>🟠 Alta</label><input id="fpsHigh"></div><div><label>🟡 Media</label><input id="fpsMedium"></div><div><label>🟢 Baja</label><input id="fpsLow"></div></div>
+      <div class="fs">Requisitos</div>
+      <div class="fg g3"><div><label>CPU mínimo</label><input id="rminCpu"></div><div><label>GPU mínimo</label><input id="rminGpu"></div><div><label>RAM mínimo</label><input id="rminRam"></div></div>
+      <div class="fg g3"><div><label>CPU recomendado</label><input id="rrecCpu"></div><div><label>GPU recomendado</label><input id="rrecGpu"></div><div><label>RAM recomendado</label><input id="rrecRam"></div></div>
+      <div class="fs">Recomendación y notas</div>
+      <div class="fg"><div><label>Recomendación</label><input id="fReco"></div>
+      <div><label>Notas (una por línea, con prefijo ✅ ⚠️ 🔴 💡)</label><textarea id="fNotes" rows="5"></textarea></div></div>
+      <div class="fs">Enlaces</div>
+      <div class="fg g2"><div><label>YouTube gameplay</label><input id="fYt" type="url"></div><div><label>Steam</label><input id="fSteam" type="url"></div></div>
+      <div class="row" style="justify-content:flex-end;margin-top:16px"><button type="button" class="btn" id="btnCancel">Cancelar</button><button class="btn primary" type="submit">Guardar juego</button></div>
+    </form>
   </div>
+</div>
 
-  <!-- ── Modal Buscador IGDB ── -->
-  <div class="igdb-overlay" id="modalIGDB">
-    <div class="igdb-box">
-      <span class="igdb-close" onclick="cerrarIGDB()">×</span>
-      <h2>Buscar Juego</h2>
-      <p>Escribe el nombre para obtener portada y datos automáticamente.</p>
+<script>
+'use strict';
+const KEY='mygamelib.v1', IGKEY='mygamelib.igdb';
+const MY={cpu:'Ryzen 5 3600',gpu:'RX 580 2048SP (8 GB)',ram:'16 GB'};
+const STATUS={wishlist:['Wishlist','#a78bfa'],pending:['Pendiente','#fb923c'],downloaded:['Descargado','#3b82f6'],playing:['Jugando','#4ade80'],completed:['Completado','#9ca3af']};
+const NAV=[['all','Todos'],['downloaded','Descargados'],['pending','Pendientes'],['wishlist','Wishlist'],['playing','Jugando'],['completed','Completados']];
+const COMPAT={ok:['check-circle','Sí corre','c-ok'],warn:['alert-triangle','Con limitaciones','c-warn'],no:['x-circle','No compatible','c-no']};
+const NOTE_ICON={ok:'✅',warn:'⚠️',danger:'🔴',info:'💡'};
+const NOTE_SVG={ok:['check-circle','c-ok'],warn:['alert-triangle','c-warn'],danger:['alert-octagon','c-no'],info:['info','c-info']};
+const STATUS_ICON={wishlist:'heart',pending:'clock',downloaded:'download',playing:'play',completed:'award'};
+const ICONS={"gamepad":"<line x1=\"6\" y1=\"12\" x2=\"10\" y2=\"12\"/><line x1=\"8\" y1=\"10\" x2=\"8\" y2=\"14\"/><line x1=\"15\" y1=\"13\" x2=\"15.01\" y2=\"13\"/><line x1=\"18\" y1=\"11\" x2=\"18.01\" y2=\"11\"/><rect x=\"2\" y=\"6\" width=\"20\" height=\"12\" rx=\"2\"/>","grid":"<rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"/>","download":"<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/>","upload":"<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"17 8 12 3 7 8\"/><line x1=\"12\" y1=\"3\" x2=\"12\" y2=\"15\"/>","clock":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/>","heart":"<path d=\"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z\"/>","play":"<polygon points=\"5 3 19 12 5 21 5 3\"/>","award":"<circle cx=\"12\" cy=\"8\" r=\"7\"/><polyline points=\"8.21 13.89 7 23 12 20 17 23 15.79 13.88\"/>","check-circle":"<path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"/><polyline points=\"22 4 12 14.01 9 11.01\"/>","alert-triangle":"<path d=\"M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z\"/><line x1=\"12\" y1=\"9\" x2=\"12\" y2=\"13\"/><line x1=\"12\" y1=\"17\" x2=\"12.01\" y2=\"17\"/>","x-circle":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"15\" y1=\"9\" x2=\"9\" y2=\"15\"/><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"15\"/>","alert-octagon":"<polygon points=\"7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/>","info":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"16\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"8\" x2=\"12.01\" y2=\"8\"/>","plus":"<line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"/><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/>","image":"<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" ry=\"2\"/><circle cx=\"8.5\" cy=\"8.5\" r=\"1.5\"/><polyline points=\"21 15 16 10 5 21\"/>","cpu":"<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\" ry=\"2\"/><rect x=\"9\" y=\"9\" width=\"6\" height=\"6\"/><line x1=\"9\" y1=\"1\" x2=\"9\" y2=\"4\"/><line x1=\"15\" y1=\"1\" x2=\"15\" y2=\"4\"/><line x1=\"9\" y1=\"20\" x2=\"9\" y2=\"23\"/><line x1=\"15\" y1=\"20\" x2=\"15\" y2=\"23\"/><line x1=\"20\" y1=\"9\" x2=\"23\" y2=\"9\"/><line x1=\"20\" y1=\"14\" x2=\"23\" y2=\"14\"/><line x1=\"1\" y1=\"9\" x2=\"4\" y2=\"9\"/><line x1=\"1\" y1=\"14\" x2=\"4\" y2=\"14\"/>","monitor":"<rect x=\"2\" y=\"3\" width=\"20\" height=\"14\" rx=\"2\" ry=\"2\"/><line x1=\"8\" y1=\"21\" x2=\"16\" y2=\"21\"/><line x1=\"12\" y1=\"17\" x2=\"12\" y2=\"21\"/>","database":"<ellipse cx=\"12\" cy=\"5\" rx=\"9\" ry=\"3\"/><path d=\"M21 12c0 1.66-4 3-9 3s-9-1.34-9-3\"/><path d=\"M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5\"/>","hdd":"<line x1=\"22\" y1=\"12\" x2=\"2\" y2=\"12\"/><path d=\"M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"/><line x1=\"6\" y1=\"16\" x2=\"6.01\" y2=\"16\"/><line x1=\"10\" y1=\"16\" x2=\"10.01\" y2=\"16\"/>","search":"<circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/>"};
+function ico(n,size=16,cls='',color=''){return `<svg class="ic ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${color?`style="color:${color}"`:''}>${ICONS[n]||''}</svg>`}
+const QUAL=[['ultra','Ultra','#f87171'],['high','Alta','#fb923c'],['medium','Media','#fbbf24'],['low','Baja','#4ade80']];
 
-      <input type="text" id="igdbInput" class="igdb-input" placeholder="Ej: Cyberpunk 2077...">
+/* ---------- Estado ---------- */
+const NA='N/A';
+let games=[], selectedId=null, fStatus='all', fCompat='all', query='';
+/* Persistencia: la base de datos de EmbyHub (Postgres) es la única fuente de verdad, sin copia local */
+function apiBody(g){return {igdbId:g.igdbId||null,name:g.name,image:g.image||'',genre:g.genre||'',developer:g.developer||'',
+  year:g.year||null,compatibility:g.compatibility||'warn',recommendedQuality:g.recommendedQuality||'',fps:g.fps||{},
+  requirements:g.requirements||{},recommendation:g.recommendation||'',notes:g.notes||[],status:g.status||'wishlist',
+  youtubeLink:g.youtubeLink||'',steamLink:g.steamLink||'',storageGB:g.storageGB||0,requiresSSD:!!g.requiresSSD,
+  screenshots:g.screenshots||[]}}
+async function apiCreate(g){
+  const r=await fetch('/api/juegos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(apiBody(g))});
+  if(!r.ok)throw new Error('No se pudo crear el juego');
+  return (await r.json()).game;
+}
+async function save(g){ // persiste un juego ya existente (PUT completo)
+  if(!g||!g.id)return;
+  try{
+    const r=await fetch('/api/juegos/'+g.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(apiBody(g))});
+    if(!r.ok)throw new Error();
+    Object.assign(g,(await r.json()).game);
+  }catch(e){toast('⚠️ No se pudo guardar en el servidor')}
+}
+async function apiDelete(id){try{const r=await fetch('/api/juegos/'+id,{method:'DELETE'});return r.ok}catch(e){return false}}
+async function load(){
+  try{
+    const r=await fetch('/api/juegos/lista');
+    if(r.status===401){toast('Tu sesión expiró — vuelve a iniciar sesión');games=[];return}
+    if(!r.ok)throw new Error();
+    games=(await r.json()).games||[];
+  }catch(e){games=[];toast('⚠️ No se pudo cargar tu biblioteca desde el servidor')}
+}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
+function safeUrl(u){return /^https?:\/\//i.test(u||'')?u:''}
 
-      <div id="igdb-modo-label" class="juego-modal-label" style="margin-bottom:6px;">Agregar en sección:</div>
-      <select class="igdb-estado-select" id="igdbEstado">
-        <option value="instalado">✅ Instalado</option>
-        <option value="en_biblioteca">📚 En Biblioteca</option>
-        <option value="descargado_no_instalable">⬇️ Descargado</option>
-        <option value="por_descargar">📥 Por Descargar</option>
-        <option value="descargado_no_instalable_recursos">⚠️ Falta Recursos</option>
-        <option value="deseado" selected>❤️ Deseado</option>
-        <option value="terminado">🏆 Terminado</option>
-      </select>
+/* ---------- Placeholder de carátula ---------- */
+function placeholder(g){
+  const col={ok:['#14532d','#052e16'],warn:['#78350f','#2a1505'],no:['#7f1d1d','#2a0808']}[g.compatibility]||['#1e3a5f','#0b1626'];
+  const words=g.name.replace(/[:–—]/g,' ').split(/\s+/);const lines=[];let cur='';
+  for(const w of words){if((cur+' '+w).trim().length>14&&cur){lines.push(cur);cur=w}else cur=(cur+' '+w).trim()}
+  if(cur)lines.push(cur);
+  const ls=lines.slice(0,6);
+  const t=ls.map((l,i)=>`<text x="150" y="${210-(ls.length-1)*14+i*28}" text-anchor="middle" fill="#fff" font-family="sans-serif" font-size="22" font-weight="700">${esc(l)}</text>`).join('');
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${col[0]}"/><stop offset="1" stop-color="${col[1]}"/></linearGradient></defs><rect width="300" height="450" fill="url(#g)"/>${t}</svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+const imgOf=g=>g.image||placeholder(g);
+const imgTag=(g,cls)=>`<img ${cls?`class="${cls}"`:''} src="${esc(imgOf(g))}" alt="${esc(g.name)}" onerror="this.onerror=null;this.src=window.__ph('${esc(g.id)}')">`;
+window.__ph=id=>{const g=games.find(x=>x.id===id);return g?placeholder(g):''};
 
-      <div id="igdbLoading" class="igdb-loading" style="display:none">Buscando...</div>
-      <div class="igdb-results" id="igdbResults"></div>
+/* ---------- Render ---------- */
+function filtered(){
+  const q=query.trim().toLowerCase();
+  const ORD={ok:0,warn:1,no:2};
+  return games.filter(g=>(fStatus==='all'||g.status===fStatus)&&(fCompat==='all'||g.compatibility===fCompat)&&(!q||g.name.toLowerCase().includes(q))).sort((a,b)=>(ORD[a.compatibility]??3)-(ORD[b.compatibility]??3)||perf(b).score-perf(a).score);
+}
+function renderNav(){
+  $('totalGames').textContent=games.length;
+  $('navStatus').innerHTML=NAV.map(([k,l])=>{const n=k==='all'?games.length:games.filter(g=>g.status===k).length;
+    const ic=k==='all'?ico('grid',16):ico(STATUS_ICON[k],16,'',STATUS[k][1]);
+    return `<button class="nav ${fStatus===k?'active':''}" data-status="${k}">${ic}<span class="lb">${l}</span><small>${n}</small></button>`}).join('');
+  const cs=[['all','Todos'],['ok','Sí corre'],['warn','Con limitaciones'],['no','No compatible']];
+  $('navCompat').innerHTML=cs.map(([k,l])=>{const n=k==='all'?games.length:games.filter(g=>g.compatibility===k).length;
+    const ic=k==='all'?ico('grid',16):ico(COMPAT[k][0],16,COMPAT[k][2]);
+    return `<button class="nav ${fCompat===k?'active':''}" data-compat="${k}">${ic}<span class="lb">${l}</span><small>${n}</small></button>`}).join('');
+}
+function renderGrid(){
+  const list=filtered();
+  $('grid').innerHTML=list.length?list.map(g=>{
+    const k=STATUS[g.status]?g.status:'wishlist',st=STATUS[k],c=COMPAT[g.compatibility]||COMPAT.ok,p=perf(g);
+    return `<div class="card ${g.id===selectedId?'sel':''}" data-id="${g.id}" title="${esc(g.name)}">
+      ${imgTag(g)}
+      <span class="badge ${c[2]}" title="${c[1]}"${g.compatibility==='warn'?` style="color:${p.color}"`:''}>${ico(c[0],16)}</span>
+      <span class="chip" style="--c:${st[1]}" title="Estado: ${st[0]}">${ico(STATUS_ICON[k],11)}${st[0]}</span>
+      <div class="info"><b>${esc(g.name)}</b><div class="perf">${meter(p)}<span><b>${g.recommendedQuality&&g.recommendedQuality!==NA?esc(g.recommendedQuality):'—'}</b> · ${esc(bestFps(g))}</span></div></div></div>`}).join('')
+    :'<div class="empty">No hay juegos que coincidan.</div>';
+}
+/* Nivel de rendimiento 0-4 a partir de la calidad recomendada y los FPS de esa calidad */
+function perf(g){
+  const q=(g.recommendedQuality||'').toLowerCase(),o=g.fps||{};
+  const key=q.startsWith('ultra')?'ultra':q.startsWith('alta')?'high':q.startsWith('media')?'medium':(q.startsWith('baja')||q.startsWith('preset'))?'low':null;
+  let v=key?o[key]:null;if(!v||v===NA)v=['ultra','high','medium','low'].map(k=>o[k]).find(x=>x&&x!==NA);
+  const fps=firstNum(v);
+  let t=key==='ultra'?4:key==='high'?3:key==='medium'?2:key==='low'?1:({ok:3,warn:1,no:0}[g.compatibility]??1);
+  if(/baja.*media|media.*baja/.test(q))t=2;
+  if(g.compatibility==='no')t=0;else if(t>0&&fps&&fps<40)t=t-1;
+  return {t,score:t*1000+Math.min(fps,999),label:['Crítico','Limitado','Justo','Bueno','Excelente'][t],color:['#f87171','#fb923c','#fbbf24','#a3e635','#4ade80'][t]};
+}
+function meter(p){return `<span class="meter" title="Rendimiento: ${p.label}" style="--mc:${p.color}">${[1,2,3,4].map(i=>`<i class="${i<=Math.max(1,p.t)?'on':''}"></i>`).join('')}</span>`}
+function bestFps(g){const o=g.fps||{};const q=(g.recommendedQuality||'').toLowerCase();
+  const key=q.startsWith('ultra')?'ultra':q.startsWith('alta')?'high':q.startsWith('media')?'medium':q.startsWith('baja')||q.startsWith('preset')?'low':null;
+  const v=key?o[key]:null;if(v&&v!==NA)return v+' FPS';
+  const any=['ultra','high','medium','low'].map(k=>o[k]).find(v=>v&&v!==NA);return any?any+' FPS':'— FPS'}
+function firstNum(s){const m=String(s||'').match(/\d+/);return m?+m[0]:0}
+function renderDetail(){
+  const d=$('detail'),g=games.find(x=>x.id===selectedId);
+  if(!g){d.innerHTML='<div class="placeholder">Selecciona un juego para ver el detalle</div>';d.classList.remove('open');return}
+  const c=COMPAT[g.compatibility]||COMPAT.ok, rc=g.compatibility==='ok'?'':g.compatibility;
+  const yt=safeUrl(g.youtubeLink)||'https://www.youtube.com/results?search_query='+encodeURIComponent(g.name+' gameplay RX 580 Ryzen 5 3600');
+  const steam=safeUrl(g.steamLink)||'https://store.steampowered.com/search/?term='+encodeURIComponent(g.name);
+  const rq=g.requirements||{min:{},rec:{}};
+  const row=(l,k)=>`<tr><td>${l}</td><td>${esc(rq.min?.[k]||'—')}</td><td>${esc(rq.rec?.[k]||'—')}</td><td class="c-ok">${esc(MY[k])}</td></tr>`;
+  d.innerHTML=`<button class="closeDetail" id="closeDetail">✕</button>
+  ${imgTag(g,'dimg')}
+  <div class="dbody">
+    <div class="dtitle"><h2>${esc(g.name)}</h2><button class="editTop" id="btnEditTop" title="Editar juego" aria-label="Editar juego"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button></div>
+    <div class="dmeta">${[g.year,g.genre,g.developer].filter(Boolean).map(esc).join(' · ')||'&nbsp;'}</div>
+    <div class="stats">
+      <div class="stat"><small>Compatibilidad</small><b class="${c[2]}">${ico(c[0],14)} ${c[1]}</b></div>
+      <div class="stat"><small>Calidad recomendada</small><b>${esc(g.recommendedQuality||'—')}</b></div>
+      <div class="stat"><small>FPS estimado</small><b>${esc(bestFps(g))}</b></div>
+      <div class="stat"><small>Espacio en disco</small><b>${g.storageGB?esc(g.storageGB)+' GB':'—'}${g.requiresSSD?' <span class="c-no" title="Requiere SSD">· SSD</span>':''}</b></div>
+      <div class="stat" style="grid-column:1/-1"><small>Nivel de rendimiento</small><b>${meter(perf(g))} <span style="color:${perf(g).color}">${perf(g).label}</span></b></div>
     </div>
-  </div>
+    <div class="sec">Rendimiento por calidad</div>
+    ${QUAL.map(([k,l,col])=>{const v=g.fps?.[k]||NA;const w=v===NA?0:Math.min(100,firstNum(v)/144*100);
+      return `<div class="bar"><span>${l}</span><div class="t"><i style="width:${w}%;background:${col}"></i></div><span>${esc(v)}</span></div>`}).join('')}
+    ${g.recommendation?`<div class="sec">Recomendación</div><div class="reco ${rc}">👉 ${esc(g.recommendation)}</div>`:''}
+    ${g.notes?.length?`<div class="sec">Notas</div><ul class="notes">${g.notes.map(n=>`<li><span class="${(NOTE_SVG[n.type]||NOTE_SVG.info)[1]}">${ico((NOTE_SVG[n.type]||NOTE_SVG.info)[0],15)}</span><span>${esc(n.text)}</span></li>`).join('')}</ul>`:''}
+    ${g.screenshots?.length?`<div class="sec">Capturas</div><div class="shots">${g.screenshots.map((u,i)=>`<img data-shot="${i}" src="${esc(safeUrl(u))}" alt="Captura ${i+1}" loading="lazy">`).join('')}</div>`:''}
+    <div class="sec">Estado</div>
+    <div class="sbtns">${Object.entries(STATUS).map(([k,[l]])=>`<button data-setstatus="${k}" style="--c:${STATUS[k][1]}" class="${g.status===k?'on':''}">${ico(STATUS_ICON[k],13)} ${l}</button>`).join('')}</div>
+    <div class="sec">Enlaces</div>
+    <div class="links">
+      <div class="lrow"><input id="ytInput" placeholder="Link de YouTube gameplay…" value="${esc(g.youtubeLink||'')}"><a href="${esc(yt)}" target="_blank" rel="noopener">▶ YouTube</a></div>
+      <div class="lrow"><input id="steamInput" placeholder="Link de Steam…" value="${esc(g.steamLink||'')}"><a href="${esc(steam)}" target="_blank" rel="noopener">Steam</a></div>
+    </div>
+    <div class="sec">Mis specs vs. requisitos</div>
+    <table class="cmp"><tr><th></th><th>Mín.</th><th>Rec.</th><th>Mi PC</th></tr>${row('CPU','cpu')}${row('GPU','gpu')}${row('RAM','ram')}
+      <tr><td>Disco</td><td colspan="2">${g.requiresSSD?'<span class="c-no">SSD requerido</span>':'HDD suficiente'}</td><td class="${g.requiresSSD?'c-no':'c-ok'}">HDD</td></tr></table>
+    <div class="dactions"><button class="btn" id="btnEdit">✎ Editar</button><button class="btn danger" id="btnDel">🗑 Eliminar</button></div>
+  </div>`;
+  d.classList.add('open');
+  $('closeDetail').onclick=()=>{selectedId=null;renderAll()};
+  $('ytInput').onchange=async e=>{g.youtubeLink=e.target.value.trim();await save(g);renderDetail()};
+  $('steamInput').onchange=async e=>{g.steamLink=e.target.value.trim();await save(g);renderDetail()};
+  $('btnEdit').onclick=()=>openModal(g);
+  $('btnEditTop').onclick=()=>openModal(g);
+  $('btnDel').onclick=async()=>{if(await askDelete(g)){await apiDelete(g.id);games=games.filter(x=>x.id!==g.id);selectedId=null;renderAll();toast('Juego eliminado')}};
+}
+function renderAll(){renderNav();renderGrid();renderDetail()}
 
-  <script src="/js/auth.js"></script>
-  <script src="/js/juegos.js"></script>
+/* ---------- Eventos principales ---------- */
+$('navStatus').onclick=e=>{const b=e.target.closest('[data-status]');if(b){fStatus=b.dataset.status;renderNav();renderGrid()}};
+$('navCompat').onclick=e=>{const b=e.target.closest('[data-compat]');if(b){fCompat=b.dataset.compat;renderNav();renderGrid()}};
+$('search').oninput=e=>{query=e.target.value;renderGrid()};
+$('grid').onclick=e=>{const c=e.target.closest('.card');if(c){selectedId=c.dataset.id;document.querySelectorAll('.card.sel').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');renderDetail()}};
+$('grid').ondblclick=e=>{const c=e.target.closest('.card');if(!c)return;const g=games.find(x=>x.id===c.dataset.id);if(g){selectedId=g.id;renderGrid();renderDetail();openModal(g)}};
+$('detail').onclick=e=>{
+  const g=games.find(x=>x.id===selectedId);if(!g)return;
+  const sh=e.target.closest('[data-shot]');if(sh){openLightbox(g.screenshots,+sh.dataset.shot);return}
+  if(e.target.closest('.dimg')&&g.image){openLightbox([g.image],0);return}
+  const b=e.target.closest('[data-setstatus]');if(!b)return;
+  g.status=b.dataset.setstatus;save(g).then(renderAll);renderAll();};
 
-  <nav class="mobile-nav">
-    <a href="/portal"><span class="nav-icon">🏠</span><span>Inicio</span></a>
-    <a href="/media/peliculas"><span class="nav-icon">🎬</span><span>Peliculas</span></a>
-    <a href="/media/series"><span class="nav-icon">📺</span><span>Series</span></a>
-    <a href="/media/buscar"><span class="nav-icon">🔍</span><span>Buscar</span></a>
-    <a href="/juegos"><span class="nav-icon">🎮</span><span>Juegos</span></a>
-  </nav>
+/* ---------- Diálogos y visor de imágenes (modales propios) ---------- */
+let dlgCancel=()=>{};
+function dialog(title,msg,buttons){return new Promise(res=>{
+  $('dlgTitle').textContent=title;$('dlgMsg').textContent=msg;
+  const box=$('dlgBtns');box.innerHTML='';
+  const done=v=>{$('dlg').classList.add('hidden');res(v)};
+  buttons.forEach(b=>{const el=document.createElement('button');el.type='button';el.className='btn '+(b.cls||'');el.textContent=b.label;el.onclick=()=>done(b.value);box.appendChild(el)});
+  dlgCancel=()=>done(null);
+  $('dlg').classList.remove('hidden');box.lastElementChild.focus();
+})}
+async function askDelete(g){
+  return (await dialog('Eliminar juego','¿Eliminar "'+g.name+'" de tu biblioteca? Esta acción no se puede deshacer.',[{label:'Cancelar',value:false},{label:'Eliminar',value:true,cls:'danger-solid'}]))===true;
+}
+$('dlg').addEventListener('mousedown',e=>{if(e.target===$('dlg'))dlgCancel()});
+let lbList=[],lbI=0;
+function showLb(){$('lbImg').src=lbList[lbI];$('lbCount').textContent=(lbI+1)+' / '+lbList.length;$('lightbox').classList.toggle('single',lbList.length<2)}
+function openLightbox(list,i){lbList=(list||[]).filter(Boolean);if(!lbList.length)return;lbI=Math.max(0,i||0);showLb();$('lightbox').classList.remove('hidden')}
+function lbStep(d){lbI=(lbI+d+lbList.length)%lbList.length;showLb()}
+function closeLb(){$('lightbox').classList.add('hidden');$('lbImg').src=''}
+$('lbClose').onclick=closeLb;
+$('lbPrev').onclick=e=>{e.stopPropagation();lbStep(-1)};
+$('lbNext').onclick=e=>{e.stopPropagation();lbStep(1)};
+$('lightbox').addEventListener('click',e=>{if(e.target===$('lightbox'))closeLb()});
+let lbX=0;
+$('lightbox').addEventListener('touchstart',e=>{lbX=e.touches[0].clientX},{passive:true});
+$('lightbox').addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-lbX;if(Math.abs(dx)>50&&lbList.length>1)lbStep(dx<0?1:-1)});
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+/* ---------- Export / Import ---------- */
+$('btnExport').onclick=()=>{
+  const blob=new Blob([JSON.stringify({games},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mygamelib-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+$('btnImport').onclick=()=>$('fileImport').click();
+$('fileImport').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=async()=>{try{
+    const d=JSON.parse(r.result);const arr=Array.isArray(d)?d:d.games;
+    if(!Array.isArray(arr)||arr.some(g=>!g||typeof g.name!=='string'))throw new Error('Formato inválido');
+    const choice=await dialog('Importar biblioteca','Se encontraron '+arr.length+' juegos en el archivo. ¿Reemplazar la biblioteca actual o combinarla (añadir solo los que no existan)?',[{label:'Cancelar',value:null},{label:'Combinar',value:'merge'},{label:'Reemplazar',value:'replace',cls:'danger-solid'}]);
+    if(!choice)return;const repl=choice==='replace';
+    toast('Importando…');
+    if(repl){for(const g of games)await apiDelete(g.id);games=[];}
+    const existing=new Set(games.map(g=>g.name.toLowerCase()));
+    let n=0;
+    for(const g of arr){
+      if(!repl&&existing.has(g.name.toLowerCase()))continue;
+      try{games.push(await apiCreate(g));n++}catch(e){}
     }
-  </script>
-</body>
+    selectedId=null;renderAll();toast(n+' juego(s) importado(s)');
+  }catch(err){toast('Error al importar: '+err.message)}};
+  r.readAsText(f);e.target.value='';
+};
 
+/* ---------- Modal / formulario ---------- */
+let editingId=null, formImage='', formShots=[];
+const F=id=>$(id);
+$('fStatus').innerHTML=Object.entries(STATUS).map(([k,[l]])=>`<option value="${k}">${l}</option>`).join('');
+function setTab(t){
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  $('paneA').classList.toggle('hidden',t!=='A');$('paneB').classList.toggle('hidden',t!=='B');
+}
+$('tabs').onclick=e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.tab)};
+function setImage(v){formImage=v||'';$('fImgUrl').value=formImage.startsWith('data:')?'':formImage;
+  $('fImgPrev').src=formImage||placeholder({name:F('fName').value||'Sin imagen',compatibility:F('fCompat').value})}
+function fillForm(g){
+  formIgdbId=g.igdbId||null;
+  F('fName').value=g.name||'';F('fDev').value=g.developer||'';F('fYear').value=g.year||'';F('fGenre').value=g.genre||'';
+  F('fGB').value=g.storageGB??'';F('fCompat').value=g.compatibility||'ok';F('fQuality').value=g.recommendedQuality||'';
+  F('fStatus').value=g.status||'wishlist';F('fSSD').checked=!!g.requiresSSD;
+  const f=g.fps||{};F('fpsUltra').value=f.ultra||'';F('fpsHigh').value=f.high||'';F('fpsMedium').value=f.medium||'';F('fpsLow').value=f.low||'';
+  const r=g.requirements||{min:{},rec:{}};
+  F('rminCpu').value=r.min?.cpu||'';F('rminGpu').value=r.min?.gpu||'';F('rminRam').value=r.min?.ram||'';
+  F('rrecCpu').value=r.rec?.cpu||'';F('rrecGpu').value=r.rec?.gpu||'';F('rrecRam').value=r.rec?.ram||'';
+  F('fReco').value=g.recommendation||'';
+  F('fNotes').value=(g.notes||[]).map(n=>(NOTE_ICON[n.type]||'💡')+' '+n.text).join('\n');
+  F('fYt').value=g.youtubeLink||'';F('fSteam').value=g.steamLink||'';
+  setImage(g.image||'');formShots=[...(g.screenshots||[])];renderShots();
+}
+function openModal(g){
+  editingId=g?g.id:null;$('mtitle').textContent=g?'Editar juego':'Agregar juego';
+  fillForm(g||{compatibility:'ok',status:'wishlist'});
+  $('claudeText').value='';$('parsePreview').classList.add('hidden');$('igResults').innerHTML='';
+  $('mDelete').classList.toggle('hidden',!g);$('tabs').classList.toggle('hidden',!!g);setTab(g?'C':'A');
+  $('modal').classList.remove('hidden');
+}
+function closeModal(){$('modal').classList.add('hidden')}
+$('btnAdd').onclick=()=>openModal(null);
+$('mDelete').onclick=async()=>{const g=games.find(x=>x.id===editingId);if(g&&await askDelete(g)){await apiDelete(g.id);games=games.filter(x=>x.id!==g.id);if(selectedId===g.id)selectedId=null;closeModal();renderAll();toast('Juego eliminado')}};
+$('mclose').onclick=closeModal;$('btnCancel').onclick=closeModal;
+$('modal').addEventListener('mousedown',e=>{if(e.target===$('modal'))closeModal()});
+document.addEventListener('keydown',e=>{
+  const open=id=>!$(id).classList.contains('hidden');
+  if(open('lightbox')){if(e.key==='Escape')closeLb();else if(e.key==='ArrowLeft')lbStep(-1);else if(e.key==='ArrowRight')lbStep(1);return}
+  if(e.key!=='Escape')return;
+  if(open('dlg')){dlgCancel();return}
+  if(open('pickModal')){$('pickModal').classList.add('hidden');return}
+  if(open('upModal')){$('upModal').classList.add('hidden');return}
+  closeModal();$('igModal').classList.add('hidden');
+});
+$('fCompat').onchange=()=>{if(!formImage)setImage('')};
+$('fName').onchange=()=>{if(!formImage)setImage('')};
+
+function parseNotes(txt){
+  return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const m=l.match(/^(✅|⚠️?|🔴|💡)\s*(.*)$/u);
+    if(!m)return {type:'info',text:l};
+    return {type:m[1]==='✅'?'ok':m[1].startsWith('⚠')?'warn':m[1]==='🔴'?'danger':'info',text:m[2]};
+  });
+}
+function readForm(){
+  const v=id=>F(id).value.trim();
+  return {igdbId:formIgdbId,name:v('fName'),developer:v('fDev'),year:v('fYear')?+v('fYear'):null,genre:v('fGenre'),
+    storageGB:v('fGB')!==''?+v('fGB'):0,compatibility:F('fCompat').value,recommendedQuality:v('fQuality'),
+    status:F('fStatus').value,requiresSSD:F('fSSD').checked,
+    fps:{ultra:v('fpsUltra')||NA,high:v('fpsHigh')||NA,medium:v('fpsMedium')||NA,low:v('fpsLow')||NA},
+    requirements:{min:{cpu:v('rminCpu'),gpu:v('rminGpu'),ram:v('rminRam')},rec:{cpu:v('rrecCpu'),gpu:v('rrecGpu'),ram:v('rrecRam')}},
+    recommendation:v('fReco'),notes:parseNotes(F('fNotes').value),youtubeLink:v('fYt'),steamLink:v('fSteam'),image:formImage,screenshots:[...formShots]};
+}
+$('form').onsubmit=async e=>{
+  e.preventDefault();const d=readForm();d.igdbId=formIgdbId;
+  const btn=$('mSave');btn.disabled=true;
+  try{
+    if(editingId){const g=games.find(x=>x.id===editingId);Object.assign(g,d);await save(g);selectedId=g.id}
+    else{const g=await apiCreate(d);games.push(g);selectedId=g.id}
+    closeModal();renderAll();toast('Juego guardado');
+  }catch(err){toast('Error al guardar: '+err.message)}
+  btn.disabled=false;
+};
+
+/* ---------- Método A: parser de Claude ---------- */
+function parseClaude(text){
+  const out={fps:{ultra:NA,high:NA,medium:NA,low:NA},requirements:{min:{},rec:{}},notes:[]};
+  const clean=s=>s.replace(/\*\*/g,'').replace(/`/g,'').trim();
+  const cells=s=>s.split(/\t|\||\s{2,}/).map(clean).filter(c=>c!=='');
+  const qmap={ultra:'ultra',alta:'high',media:'medium',baja:'low'};
+  const typeOf=e=>e==='✅'?'ok':e==='⚠'?'warn':(e==='🔴'||e==='❌')?'danger':'info';
+  let tableSeen=false,m;
+  for(const raw of text.split(/\r?\n/)){
+    let line=raw.replace(/️/g,'').trim();if(!line)continue;
+    line=line.replace(/^#{1,6}\s*/,'');
+    const bullet=/^[-*•]\s+/.test(line);line=line.replace(/^[-*•]\s+/,'').replace(/^\|\s*/,'');
+    if(!out.name&&(m=line.match(/^🎮\s*(.+)$/u))){out.name=clean(m[1]);continue}
+    if(!out.compatibility&&!tableSeen&&!bullet&&(m=line.match(/^(✅|⚠|❌)/u))){out.compatibility=m[1]==='✅'?'ok':m[1]==='⚠'?'warn':'no';continue}
+    if(m=line.match(/^(?:🔴|🟠|🟡|🟢)\s*(Ultra|Alta|Media|Baja)\b(.*)$/iu)){
+      tableSeen=true;
+      const v=m[2].match(/~?\s*(\d+\s*[–—-]\s*\d+\+?|\d+\+|\d+(?=\s*fps)|N\/A)/i);
+      if(v)out.fps[qmap[m[1].toLowerCase()]]=/n\/a/i.test(v[1])?NA:v[1].replace(/\s*[—-]\s*/,'–').replace(/\s+/g,'');
+      continue}
+    if(m=line.match(/^\**\s*(CPU|GPU|RAM)\s*\**\s*(?:\t|\||\s{2,})(.*)$/i)){
+      tableSeen=true;const c=cells(m[2]),k=m[1].toLowerCase();
+      out.requirements.min[k]=c[0]||'';out.requirements.rec[k]=c[1]||'';continue}
+    if(m=line.match(/^\**\s*(?:Storage|Almacenamiento|Disco|Espacio)\s*\**\s*(?:\t|\||\s{2,})(.*)$/i)){
+      tableSeen=true;const g=m[1].match(/(\d+(?:[.,]\d+)?)\s*GB/i);if(g)out.storageGB=parseFloat(g[1].replace(',','.'));continue}
+    if(m=line.match(/^👉\s*(?:\*\*)?\s*Recomendaci[oó]n\s*:?\s*(?:\*\*)?\s*:?\s*(.+)$/iu)){
+      tableSeen=true;out.recommendation=clean(m[1]);
+      const part=clean(m[1].split(/\s+[—–-]\s+/)[0]);
+      const q=part.match(/^(Ultra(?:\/Max)?|Alta|Media|Baja)(?:\s*-\s*Media|\s*\+\s*FSR\w*)?/i);
+      out.recommendedQuality=q?q[0]:part;
+      const y=m[1].match(/(?:del?|desde)\s+((?:19|20)\d\d)\b/i);if(y)out.year=+y[1];
+      continue}
+    if(m=line.match(/^(✅|⚠|🔴|❌|💡|🎮|🏆|📌|⭐|📝)\s*(.+)$/u))out.notes.push({type:typeOf(m[1]),text:clean(m[2])});
+  }
+  out.requiresSSD=out.notes.some(n=>n.type==='danger'&&/SSD/i.test(n.text)&&/obligatori|requerid|necesari|requiere/i.test(n.text));
+  return out;
+}
+$('btnParse').onclick=()=>{
+  const txt=$('claudeText').value;if(!txt.trim()){toast('Pega primero el texto');return}
+  const p=parseClaude(txt),cur=readForm();
+  if(!p.name){toast('No se encontró la línea del nombre (🎮 Nombre del juego)');return}
+  fillForm({...cur,...p,fps:p.fps,requirements:{min:{...p.requirements.min},rec:{...p.requirements.rec}},
+    compatibility:p.compatibility||cur.compatibility,recommendedQuality:p.recommendedQuality||'',
+    recommendation:p.recommendation||'',notes:p.notes,image:formImage,
+    year:p.year||cur.year,genre:cur.genre,developer:cur.developer,storageGB:p.storageGB??cur.storageGB,status:cur.status,
+    youtubeLink:cur.youtubeLink,steamLink:cur.steamLink,requiresSSD:p.requiresSSD||cur.requiresSSD});
+  const c=COMPAT[p.compatibility]||['info','No detectada',''];
+  const req=['cpu','gpu','ram'].filter(k=>p.requirements.min[k]||p.requirements.rec[k]).length;
+  const pv=$('parsePreview');pv.classList.remove('hidden');
+  pv.innerHTML=`<b>Extraído:</b><br>${ico('gamepad',14)} ${esc(p.name)}<br>Compatibilidad: <span class="${c[2]}">${ico(c[0],14)} ${c[1]}</span><br>Calidad: ${esc(p.recommendedQuality||'—')}<br>
+  FPS: ${QUAL.map(([k,l])=>l+' '+esc(p.fps[k])).join(' · ')}<br>Requisitos: ${req}/3 filas · Espacio: ${p.storageGB!=null?p.storageGB+' GB':'—'}${p.requiresSSD?' · SSD requerido':''} · Notas: ${p.notes.length}<br>
+  <span class="hint">Completa abajo: enlace de YouTube, estado inicial e imagen; luego "Guardar juego".</span>`;
+};
+
+/* ---------- Método B: IGDB ---------- */
+let formIgdbId=null;
+async function igdbSearch(q){
+  const r=await fetch('/api/juegos/buscar?q='+encodeURIComponent(q));
+  if(!r.ok)throw new Error('Error '+r.status);
+  return r.json(); // [{id,name,year,genre,developer,image,shots}]
+}
+const igErr=e=>toast('No se pudo buscar en IGDB: '+e.message);
+async function doIg(){
+  const q=$('igQuery').value.trim();if(!q)return;
+  $('igResults').innerHTML='<span class="hint">Buscando…</span>';
+  try{const r=await igdbSearch(q);
+    $('igResults').innerHTML=r.length?r.map((x,i)=>`<div class="res" data-i="${i}">${x.image?`<img src="${esc(x.image)}" alt="">`:'<img alt="">'}<div><b>${esc(x.name)}</b><br>${x.year||''} ${esc(x.genre)}</div></div>`).join(''):'<span class="hint">Sin resultados</span>';
+    $('igResults')._r=r;
+  }catch(e){$('igResults').innerHTML='';igErr(e)}
+}
+$('btnIg').onclick=doIg;
+$('igQuery').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doIg()}};
+$('igResults').onclick=e=>{const c=e.target.closest('.res');if(!c)return;const x=$('igResults')._r[+c.dataset.i];
+  F('fName').value=x.name;if(x.year)F('fYear').value=x.year;if(x.genre)F('fGenre').value=x.genre;if(x.developer)F('fDev').value=x.developer;
+  formIgdbId=x.id||null;setImage(x.image);toast('Datos cargados — completa el resto con A o manualmente');setTab('C')};
+function renderShots(){$('fShots').innerHTML=formShots.map((u,i)=>`<div class="shot"><img src="${esc(u)}" alt=""><button type="button" data-rm="${i}" title="Quitar">×</button></div>`).join('')}
+$('fShots').onclick=e=>{const im=e.target.closest('.shot img');if(im){openLightbox(formShots,[...$('fShots').querySelectorAll('.shot img')].indexOf(im));return}const b=e.target.closest('[data-rm]');if(b){formShots.splice(+b.dataset.rm,1);renderShots()}};
+let pkRes=[],pkCur=null;
+async function pkSearch(){
+  const q=$('pkQuery').value.trim();if(!q)return;
+  $('pkResults').innerHTML='<span class="hint">Buscando…</span>';$('pkDetail').classList.add('hidden');
+  try{pkRes=await igdbSearch(q);
+    $('pkResults').innerHTML=pkRes.length?pkRes.map((x,i)=>`<div class="res cover" data-i="${i}"><img src="${esc(x.image)}" alt=""><div><b>${esc(x.name)}</b><br>${x.year||''}${x.shots.length?' · '+x.shots.length+' 📷':''}</div></div>`).join(''):'<span class="hint">Sin resultados</span>';
+  }catch(e){$('pkResults').innerHTML='';igErr(e)}
+}
+function pkShow(i){pkCur=pkRes[i];renderTiles();$('pkDetail').classList.remove('hidden');$('pkDetail').scrollIntoView({behavior:'smooth',block:'nearest'})}
+function renderTiles(){
+  const x=pkCur;if(!x)return;
+  const tiles=[];if(x.image)tiles.push([x.image,x.image,'Carátula IGDB']);
+  x.shots.forEach((u,k)=>tiles.push([u,u.replace('t_1080p','t_screenshot_med'),'Captura '+(k+1)]));
+  $('pkImgs').innerHTML=tiles.length?tiles.map(t=>{const isC=formImage===t[0],isS=formShots.includes(t[0]);
+    return `<div class="res ${isC?'iscover':''}" data-url="${esc(t[0])}"><img src="${esc(t[1])}" alt=""><div>${t[2]}<div class="pkb"><button type="button" data-act="cover" class="${isC?'on':''}">${isC?'✓ ':''}Carátula</button><button type="button" data-act="shot" class="${isS?'on':''}">${isS?'✓ ':'＋ '}Galería</button></div></div></div>`}).join(''):'<span class="hint">Este juego no tiene imágenes en IGDB</span>';
+}
+function pkPick(url,act){
+  const g=editingId&&games.find(x=>x.id===editingId);
+  if(act==='shot'){
+    const i=formShots.indexOf(url);if(i<0)formShots.push(url);else formShots.splice(i,1);
+    renderShots();if(g){g.screenshots=[...formShots];save(g).then(renderAll)}
+  }else{
+    setImage(url);
+    if(pkCur){if(!F('fYear').value&&pkCur.year)F('fYear').value=pkCur.year;if(!F('fGenre').value&&pkCur.genre)F('fGenre').value=pkCur.genre;if(!F('fDev').value&&pkCur.developer)F('fDev').value=pkCur.developer;formIgdbId=pkCur.id||formIgdbId}
+    if(g){g.image=url;if(!g.year&&pkCur?.year)g.year=pkCur.year;if(!g.genre&&pkCur?.genre)g.genre=pkCur.genre;if(!g.developer&&pkCur?.developer)g.developer=pkCur.developer;save(g).then(renderAll)}
+  }
+  renderTiles();toast(g?'✅ Guardado':'Seleccionado — pulsa 💾 para guardar');
+}
+$('btnCover').onclick=()=>{$('pickModal').classList.remove('hidden');$('pkQuery').value=F('fName').value.trim();$('pkDetail').classList.add('hidden');$('pkResults').innerHTML='';if($('pkQuery').value)pkSearch()};
+$('pkGo').onclick=pkSearch;$('pkQuery').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();pkSearch()}};
+$('pkClose').onclick=()=>$('pickModal').classList.add('hidden');
+$('pkResults').onclick=e=>{const c=e.target.closest('.res');if(c)pkShow(+c.dataset.i)};
+$('pkImgs').onclick=e=>{const b=e.target.closest('[data-act]');if(b)pkPick(b.closest('[data-url]').dataset.url,b.dataset.act)};
+
+/* ---------- Carátulas masivas IGDB ---------- */
+$('btnCovers').onclick=()=>{$('igModal').classList.remove('hidden')};
+$('igmClose').onclick=()=>$('igModal').classList.add('hidden');
+let bBusy=false;
+$('bStart').onclick=async()=>{
+  if(bBusy)return;
+  const todo=games.filter(g=>$('bAll').checked||!g.image);
+  if(!todo.length){$('bStat').textContent='Todos tienen imagen';return}
+  bBusy=true;const log=$('bLog');log.innerHTML='';let ok=0,fail=0;
+  const clean=n=>n.replace(/\s*[:–—-]\s*[^:–—-]*(Edition|Remastered)\s*$/i,'').trim();
+  for(let i=0;i<todo.length;i++){
+    const g=todo[i];$('bStat').textContent=(i+1)+' / '+todo.length;
+    try{
+      const q=clean(g.name),r=await igdbSearch(q);
+      const x=r.find(y=>y.image&&y.name.toLowerCase()===q.toLowerCase())||r.find(y=>y.image);
+      if(!x)throw new Error('sin resultado');
+      g.image=x.image;if(!g.year&&x.year)g.year=x.year;if(!g.genre&&x.genre)g.genre=x.genre;if(!g.developer&&x.developer)g.developer=x.developer;
+      await save(g);ok++;log.innerHTML+='✅ '+esc(g.name)+' → '+esc(x.name)+'<br>';renderAll();
+    }catch(e){
+      fail++;log.innerHTML+='❌ '+esc(g.name)+': '+esc(e.message)+'<br>';
+    }
+    log.scrollTop=log.scrollHeight;
+  }
+  bBusy=false;$('bStat').textContent='Listo: '+ok+' con carátula, '+fail+' fallidas';
+};
+
+/* ---------- Próximos lanzamientos (IGDB, scroll infinito) ---------- */
+let upCache=[], upOffset=0, upDone=false, upLoading=false;
+function fmtDate(ts){if(!ts)return'Fecha por confirmar';const d=new Date(ts*1000);return d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}
+function upCardHtml(x,i,existing){
+  const already=existing.has(x.name.toLowerCase());
+  return `<div class="upcard"><img src="${esc(x.image||placeholder({name:x.name,compatibility:'warn'}))}" alt="" loading="lazy">
+      <div class="ub"><b>${esc(x.name)}</b><span class="date">${esc(fmtDate(x.date))}</span>
+      <span class="tags">${esc(x.genre||x.platforms||'')}</span>
+      <span class="hype">🔥 ${x.hypes} interesados</span>
+      <button type="button" data-up="${i}" class="${already?'added':''}">${already?'✓ En tu biblioteca':'＋ Agregar a mi biblioteca'}</button></div></div>`;
+}
+async function loadUpcoming(){
+  if(upLoading||upDone)return;
+  upLoading=true;
+  const first=!upCache.length;
+  if(first)$('upBody').innerHTML='<div class="hint">Cargando…</div>';
+  else $('upSentinel').textContent='Cargando más…';
+  try{
+    const r=await fetch('/api/juegos/proximos?offset='+upOffset);
+    const d=await r.json();
+    if(!Array.isArray(d))throw new Error('Respuesta inválida');
+    if(d.length<24)upDone=true;
+    const existing=new Set(games.map(g=>g.name.toLowerCase()));
+    const start=upCache.length;
+    upCache=upCache.concat(d);
+    upOffset+=d.length;
+    const html=d.map((x,i)=>upCardHtml(x,start+i,existing)).join('');
+    if(first){
+      $('upBody').innerHTML=upCache.length
+        ?'<div class="upgrid" id="upGrid">'+html+'</div><div id="upSentinel" class="hint" style="text-align:center;padding:10px"></div>'
+        :'<div class="hint">IGDB no tiene lanzamientos próximos con suficiente interés ahora mismo.</div>';
+    }else{
+      $('upGrid').insertAdjacentHTML('beforeend',html);
+      $('upSentinel').textContent=upDone?'No hay más lanzamientos próximos.':'';
+    }
+  }catch(e){
+    if(first)$('upBody').innerHTML='<div class="hint">'+(e instanceof TypeError?'No se pudo conectar con IGDB.':esc(e.message))+'</div>';
+    else $('upSentinel').textContent='No se pudo cargar más.';
+  }
+  upLoading=false;
+}
+$('btnUpcoming').onclick=()=>{$('upModal').classList.remove('hidden');if(!upCache.length)loadUpcoming()};
+$('upModal').querySelector('.mbox').addEventListener('scroll',e=>{
+  const el=e.target;
+  if(el.scrollTop+el.clientHeight>el.scrollHeight-500)loadUpcoming();
+});
+$('upClose').onclick=()=>$('upModal').classList.add('hidden');
+$('upModal').addEventListener('mousedown',e=>{if(e.target===$('upModal'))$('upModal').classList.add('hidden')});
+$('upBody').onclick=e=>{
+  const b=e.target.closest('[data-up]');if(!b||b.classList.contains('added'))return;
+  const x=upCache[+b.dataset.up];
+  $('upModal').classList.add('hidden');
+  openModal(null);
+  F('fName').value=x.name;if(x.genre)F('fGenre').value=x.genre;
+  if(x.date)F('fYear').value=new Date(x.date*1000).getFullYear();
+  formIgdbId=x.id||null;formShots=[...(x.shots||[])];renderShots();
+  setImage(x.image);
+  toast('Prellenado desde IGDB — completa compatibilidad, FPS y requisitos cuando el juego salga');
+};
+
+/* ---------- Imágenes ---------- */
+$('btnPasteImg').onclick=async()=>{
+  try{for(const it of await navigator.clipboard.read()){const t=it.types.find(t=>t.startsWith('image/'));if(t){fileToImage(new File([await it.getType(t)],'clip',{type:t}));return}}
+    const txt=(await navigator.clipboard.readText()).trim();if(/^https?:\/\//i.test(txt)){setImage(txt);return}toast('El portapapeles no tiene imagen')}
+  catch(e){toast('Permite el acceso al portapapeles o usa Ctrl+V con el modal abierto')}
+};
+function fileToImage(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
+    const s=Math.min(1,500/im.width),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);setImage(c.toDataURL('image/jpeg',.82))};im.src=r.result};
+  r.readAsDataURL(file);
+}
+$('fImgUrl').oninput=e=>setImage(e.target.value.trim());
+$('btnClearImg').onclick=()=>setImage('');
+const drop=$('drop');
+drop.onclick=()=>$('fImgFile').click();
+$('fImgFile').onchange=e=>{fileToImage(e.target.files[0]);e.target.value=''};
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>fileToImage(e.dataTransfer.files[0]));
+document.addEventListener('paste',e=>{
+  if($('modal').classList.contains('hidden'))return;
+  const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
+  if(it){e.preventDefault();fileToImage(it.getAsFile())}
+});
+
+/* ---------- Init ---------- */
+(async()=>{await load();renderAll();$('search').value='';})();
+/* Menú móvil */
+const sideEl=document.querySelector('.sidebar');
+function menu(open){sideEl.classList.toggle('open',open);$('backdrop').classList.toggle('show',open)}
+$('btnMenu').onclick=()=>menu(true);
+$('btnMenuClose').onclick=()=>menu(false);
+$('backdrop').onclick=()=>menu(false);
+sideEl.addEventListener('click',e=>{if(e.target.closest('.nav,#btnAdd,#btnCovers,#btnExport,#btnImport'))menu(false)});
+$('btnFab').onclick=()=>$('btnAdd').click();
+
+</script>
+</body>
 </html>
