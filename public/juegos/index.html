@@ -633,8 +633,22 @@ function readForm(){
     requirements:{min:{cpu:v('rminCpu'),gpu:v('rminGpu'),ram:v('rminRam')},rec:{cpu:v('rrecCpu'),gpu:v('rrecGpu'),ram:v('rrecRam')}},
     recommendation:v('fReco'),notes:parseNotes(F('fNotes').value),youtubeLink:v('fYt'),steamLink:v('fSteam'),image:formImage,screenshots:[...formShots]};
 }
+/* Detecta si el juego ya está en la biblioteca: por igdbId si lo trae, si no por nombre */
+function findDuplicate(d){
+  if(d.igdbId){const m=games.find(g=>g.id!==editingId&&g.igdbId===d.igdbId);if(m)return m}
+  const name=(d.name||'').trim().toLowerCase();if(!name)return null;
+  return games.find(g=>g.id!==editingId&&g.name.trim().toLowerCase()===name)||null;
+}
 $('form').onsubmit=async e=>{
   e.preventDefault();const d=readForm();d.igdbId=formIgdbId;
+  if(!editingId){
+    const dup=findDuplicate(d);
+    if(dup){
+      const st=(STATUS[dup.status]||STATUS.wishlist)[0];
+      const ok=await dialog('Ya está en tu biblioteca','"'+dup.name+'" ya existe (estado: '+st+'). ¿Quieres agregarlo de todas formas como un registro aparte, o prefieres editar el que ya tienes?',[{label:'Cancelar',value:false},{label:'Agregar igual',value:true,cls:'danger-solid'}]);
+      if(!ok)return;
+    }
+  }
   const btn=$('mSave');btn.disabled=true;
   try{
     if(editingId){const g=games.find(x=>x.id===editingId);Object.assign(g,d);await save(g);selectedId=g.id}
