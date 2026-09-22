@@ -18,7 +18,7 @@ button{cursor:pointer}
 a{color:var(--accent)}
 .app{display:grid;grid-template-columns:224px 1fr 300px;height:100vh}
 /* Sidebar */
-.sidebar{background:linear-gradient(180deg,#151515,#0f0f0f);border-right:1px solid var(--border);padding:16px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.sidebar{position:relative;background:linear-gradient(180deg,#151515,#0f0f0f);border-right:1px solid var(--border);padding:16px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
 .brand{display:flex;align-items:center;gap:10px;padding:2px 6px 14px}
 .brand .mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#6366f1);display:grid;place-items:center;color:#fff;box-shadow:0 4px 14px rgba(59,130,246,.35);flex:none}
 .brand .mark .ic{vertical-align:0}
@@ -195,8 +195,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
 .upcard button.added{border-color:var(--ok);color:var(--ok)}
 .upgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 @media(max-width:700px){.upgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
-.backportal{position:absolute;top:14px;right:14px;width:26px;height:26px;display:grid;place-items:center;color:var(--muted);text-decoration:none;font-size:20px;border-radius:6px}.backportal:hover{background:#1c1c1c;color:#fff}
-.sidebar{position:relative}
+.backportal{display:flex;align-items:center;gap:10px;color:#b4b4b4;text-decoration:none;font-size:13.5px;padding:8px 10px;border-radius:8px;margin-bottom:6px;border:1px solid var(--border)}.backportal:hover{background:#1c1c1c;color:#fff}.backportal .ic{flex:none}
 .pcCard h5{display:flex;align-items:center;justify-content:space-between}
 .pcEdit{background:none;border:0;color:#6b6b6b;padding:2px;border-radius:5px;display:grid;place-items:center}
 .pcEdit:hover{color:var(--accent);background:#1f1f1f}
@@ -207,7 +206,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
 <body>
 <div class="app">
   <aside class="sidebar">
-    <a href="/portal" class="backportal" title="Volver al portal" aria-label="Volver al portal">‹</a>
+    <a href="/portal" class="backportal"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Volver al portal</a>
     <div class="brand"><div class="mark"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/></svg></div><div><b>MyGameLib</b><small><span id="totalGames">0</span> juegos</small></div><button class="sclose" id="btnMenuClose" aria-label="Cerrar menú">×</button></div>
     <h4>Biblioteca</h4>
     <div id="navStatus"></div>
