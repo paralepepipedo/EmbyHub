@@ -463,7 +463,7 @@ function renderDetail(){
   const d=$('detail'),g=games.find(x=>x.id===selectedId);
   if(!g){d.innerHTML='<div class="placeholder">Selecciona un juego para ver el detalle</div>';d.classList.remove('open');return}
   const c=COMPAT[g.compatibility]||COMPAT.ok, rc=g.compatibility==='ok'?'':g.compatibility;
-  const yt=safeUrl(g.youtubeLink)||'https://www.youtube.com/results?search_query='+encodeURIComponent(g.name+' gameplay RX 580 Ryzen 5 3600');
+  const yt=safeUrl(g.youtubeLink)||'https://www.youtube.com/results?search_query='+encodeURIComponent(g.name+' gameplay RX 7700 Ryzen 5 3600');
   const steam=safeUrl(g.steamLink)||'https://store.steampowered.com/search/?term='+encodeURIComponent(g.name);
   const rq=g.requirements||{min:{},rec:{}};
   const row=(l,k)=>`<tr><td>${l}</td><td>${esc(rq.min?.[k]||'—')}</td><td>${esc(rq.rec?.[k]||'—')}</td><td class="c-ok">${esc(MY[k])}</td></tr>`;
